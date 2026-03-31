@@ -35,3 +35,14 @@ export async function isVerseSaved(reference: string): Promise<boolean> {
   const saved = await getSavedVerses();
   return saved.some(v => v.reference === reference);
 }
+
+export async function removeSavedVerse(reference: string): Promise<boolean> {
+  const saved = await getSavedVerses();
+  const exists = saved.findIndex(v => v.reference === reference);
+  if (exists >= 0) {
+    saved.splice(exists, 1);
+    await AsyncStorage.setItem('sakinah_saved_verses', JSON.stringify(saved));
+    return true;
+  }
+  return false;
+}

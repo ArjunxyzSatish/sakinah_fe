@@ -4,11 +4,12 @@ import { BookmarkMinus } from 'lucide-react-native';
 import { getSavedVerses, removeSavedVerse, SavedVerse } from '../utils/storage';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
+import { IslamicPattern, Crescent } from '../components/IslamicElements';
 
 export default function Saved() {
   const [verses, setVerses] = useState<SavedVerse[]>([]);
   const { language, t } = useLanguage();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   const loadVerses = useCallback(async () => {
     const saved = await getSavedVerses();
@@ -39,6 +40,7 @@ export default function Saved() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <IslamicPattern color={isDark ? 'rgba(247, 245, 239, 0.03)' : 'rgba(15, 61, 46, 0.04)'} />
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <Text style={[styles.headerTitle, { color: colors.primary }]}>{t('nav.saved')}</Text>
       </View>
@@ -46,6 +48,7 @@ export default function Saved() {
       <ScrollView contentContainerStyle={styles.content}>
         {verses.length === 0 ? (
           <View style={styles.emptyState}>
+            <Crescent size={80} color={colors.primary} style={{ opacity: 0.15, marginBottom: 24 }} />
             <Text style={[styles.emptyText, { color: colors.primary }]}>{t('saved.empty')}</Text>
           </View>
         ) : (

@@ -1,6 +1,6 @@
-import { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, RefreshControl } from 'react-native';
-import { Bookmark } from 'lucide-react-native';
+import { Bookmark, Image as ImageIcon } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { getDailyVerse, DAILY_VERSES, getRandomVerse } from '../utils/verses';
 import { generateRandomVerse } from '../services/openai';
@@ -8,6 +8,7 @@ import { useVerse } from '../context/VerseContext';
 import { toggleSaveVerse, isVerseSaved } from '../utils/storage';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
+import { IslamicPattern, Crescent } from '../components/IslamicElements';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 export default function Home() {
@@ -49,9 +50,11 @@ export default function Home() {
   };
 
   return (
-    <ScrollView
-      contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}
-      showsVerticalScrollIndicator={false}
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <IslamicPattern color={isDark ? 'rgba(247, 245, 239, 0.03)' : 'rgba(15, 61, 46, 0.04)'} />
+      <ScrollView
+        contentContainerStyle={styles.container}
+        showsVerticalScrollIndicator={false}
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
@@ -63,8 +66,15 @@ export default function Home() {
     >
       <Animated.View entering={FadeInDown.duration(800)} style={styles.content}>
 
-        <View style={[styles.labelContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Text style={[styles.labelText, { color: colors.primary }]}>{t('Verse.Of.The.Day')}</Text>
+        <View style={[styles.labelContainer, { backgroundColor: colors.card, borderColor: colors.border, flexDirection: 'row', alignItems: 'center', gap: 8 }]}>
+          {t('home.verseOfDay').split(' ').map((word, index, array) => (
+            <React.Fragment key={index}>
+              <Text style={[styles.labelText, { color: colors.primary }]}>{word}</Text>
+              {index < array.length - 1 && (
+                <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: colors.accent }} />
+              )}
+            </React.Fragment>
+          ))}
         </View>
 
         <View style={styles.verseContainer}>
@@ -80,7 +90,7 @@ export default function Home() {
 
           <View style={styles.divider}>
             <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
-            <Text style={[styles.dividerDot, { color: colors.accent }]}>•</Text>
+            <Crescent size={18} color="#D4AF37" />
             <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
           </View>
 
@@ -104,21 +114,35 @@ export default function Home() {
             <Text style={[styles.reflectBtnText, { color: colors.background }]}>{t('home.reflect')}</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.saveBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
-            onPress={handleSave}
-          >
-            <Bookmark
-              size={24}
-              color={colors.primary}
-              fill={saved ? colors.primary : (isDark ? 'rgba(247, 245, 239, 0)' : 'rgba(26, 26, 26, 0)')}
-              strokeWidth={saved ? 2.5 : 2}
-            />
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', gap: 12 }}>
+            <TouchableOpacity 
+              style={[styles.saveBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
+              onPress={() => router.push('/wallpaper')}
+            >
+              <ImageIcon 
+                size={24} 
+                color={colors.primary} 
+                strokeWidth={2} 
+              />
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[styles.saveBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
+              onPress={handleSave}
+            >
+              <Bookmark 
+                size={24} 
+                color={colors.primary} 
+                fill={saved ? colors.primary : (isDark ? 'rgba(247, 245, 239, 0)' : 'rgba(26, 26, 26, 0)')} 
+                strokeWidth={saved ? 2.5 : 2} 
+              />
+            </TouchableOpacity>
+          </View>
         </View>
 
       </Animated.View>
     </ScrollView>
+    </View>
   );
 }
 

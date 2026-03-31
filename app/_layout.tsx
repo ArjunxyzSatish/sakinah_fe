@@ -37,7 +37,6 @@ function AppLayout() {
     { path: '/', icon: Home, label: t('nav.home') },
     { path: '/chat', icon: MessageCircle, label: t('nav.reflect') },
     { path: '/saved', icon: Bookmark, label: t('nav.saved') },
-    { path: '/wallpaper', icon: ImageIcon, label: t('nav.wallpaper') },
     { path: '/settings', icon: Settings, label: t('nav.settings') },
   ];
 

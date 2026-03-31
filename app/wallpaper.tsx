@@ -4,6 +4,7 @@ import { Colors } from '../constants/Colors';
 import { useVerse } from '../context/VerseContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
+import { Crescent } from '../components/IslamicElements';
 import { Download } from 'lucide-react-native';
 import ViewShot from 'react-native-view-shot';
 import * as MediaLibrary from 'expo-media-library';
@@ -41,6 +42,16 @@ export default function Wallpaper() {
 
   const wpColors = isDark ? Colors.dark : Colors.light;
   
+  const arabicLen = dailyVerse.arabic.length;
+  const transLen = dailyVerse.translation.length;
+  const isVeryLong = arabicLen > 150 || transLen > 200;
+  const isLong = arabicLen > 80 || transLen > 120;
+  
+  const dynamicArabicSize = isVeryLong ? 16 : isLong ? 20 : 28;
+  const dynamicArabicLineHeight = isVeryLong ? 28 : isLong ? 34 : 44;
+  const dynamicTransSize = isVeryLong ? 8 : isLong ? 10 : 12;
+  const dynamicTransLineHeight = isVeryLong ? 14 : isLong ? 16 : 20;
+  
   const bg = wpColors.background;
   const textPrimary = wpColors.primary;
   const textSecondary = wpColors.text;
@@ -57,7 +68,7 @@ export default function Wallpaper() {
           <ViewShot ref={viewShotRef} options={{ format: 'png', quality: 1 }}>
             <View style={[styles.canvas, { backgroundColor: bg, borderColor: border }]}>
               <View style={styles.canvasContent}>
-                <Text style={[styles.canvasArabic, { color: textPrimary }]}>{dailyVerse.arabic}</Text>
+                <Text style={[styles.canvasArabic, { color: textPrimary, fontSize: dynamicArabicSize, lineHeight: dynamicArabicLineHeight }]}>{dailyVerse.arabic}</Text>
                 
                 <View style={[styles.canvasRefContainer, { opacity: 0.6 }]}>
                   <View style={[styles.canvasLine, { backgroundColor: textPrimary }]} />
@@ -66,12 +77,21 @@ export default function Wallpaper() {
                 </View>
 
                 {showTranslation && (
-                  <Text style={[styles.canvasTranslation, { color: textSecondary }]}>"{dailyVerse.translation}"</Text>
+                  <Text style={[styles.canvasTranslation, { color: textSecondary, fontSize: dynamicTransSize, lineHeight: dynamicTransLineHeight }]}>"{dailyVerse.translation}"</Text>
                 )}
               </View>
               
               <View style={styles.canvasFooter}>
-                <Text style={[styles.canvasBrand, { color: textSecondary }]}>sakinah</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+                  {['s', 'a', 'k', 'i', 'n', 'a', 'h'].map((char, idx) => (
+                    <View key={idx} style={{ position: 'relative', alignItems: 'center', justifyContent: 'center' }}>
+                      {char === 'i' && (
+                        <Crescent size={7} color="#D4AF37" style={{ position: 'absolute', top: -5 }} />
+                      )}
+                      <Text style={[styles.canvasBrand, { color: textSecondary, letterSpacing: 0, paddingHorizontal: 1 }]}>{char}</Text>
+                    </View>
+                  ))}
+                </View>
               </View>
             </View>
           </ViewShot>

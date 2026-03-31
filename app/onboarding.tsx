@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { useUser } from '../context/UserContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
+import { IslamicPattern, Crescent, OpenBook } from '../components/IslamicElements';
 import { Animated as RNAnimated, Easing } from 'react-native';
 import { Check } from 'lucide-react-native';
 
@@ -26,7 +27,7 @@ export default function Onboarding() {
   const router = useRouter();
   const { completeOnboarding } = useUser();
   const { setLanguage, t, language } = useLanguage();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   const handleTopicToggle = (topic: string) => {
     setSelectedTopics(prev => 
@@ -53,7 +54,9 @@ export default function Onboarding() {
   if (step === 1) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background, padding: 24, justifyContent: 'center' }]}>
+        <IslamicPattern color={isDark ? 'rgba(247, 245, 239, 0.03)' : 'rgba(15, 61, 46, 0.04)'} />
         <View style={styles.contentContainer}>
+          <Crescent size={64} color={colors.primary} style={{ marginBottom: 12 }} />
           <Text style={[styles.brand, { color: colors.text }]}>sakinah</Text>
           <Text style={[styles.subtitle, { color: colors.text }]}>Find quiet in the Qur'an</Text>
           
@@ -86,6 +89,9 @@ export default function Onboarding() {
       </View>
       
       <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={{ alignItems: 'center', marginBottom: 24 }}>
+          <OpenBook size={64} color={colors.primary} />
+        </View>
         <Text style={[styles.title, { color: colors.primary }]}>{t('onboarding.title')}</Text>
         <Text style={[styles.description, { color: colors.text }]}>{t('onboarding.subtitle')}</Text>
         

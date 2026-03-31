@@ -8,6 +8,7 @@ import { getSystemInstruction } from '../utils/prompts';
 import { useLanguage } from '../context/LanguageContext';
 import { useUser } from '../context/UserContext';
 import { useTheme } from '../context/ThemeContext';
+import { IslamicPattern, Mosque } from '../components/IslamicElements';
 
 export default function Chat() {
   const [messages, setMessages] = useState<Array<{ role: string, content: string, parsed?: ParsedContent }>>([]);
@@ -121,6 +122,7 @@ export default function Chat() {
       style={[styles.container, { backgroundColor: colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
+      <IslamicPattern color={isDark ? 'rgba(247, 245, 239, 0.03)' : 'rgba(15, 61, 46, 0.04)'} />
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <Text style={[styles.headerTitle, { color: colors.primary }]}>{t('nav.reflect')}</Text>
       </View>
@@ -132,6 +134,7 @@ export default function Chat() {
       >
         {messages.length === 0 && (
           <View style={styles.emptyState}>
+            <Mosque size={100} color={colors.primary} style={{ opacity: 0.15, marginBottom: 24 }} />
             <Text style={[styles.emptyStateText, { color: colors.primary }]}>
               {t('chat.placeholder')}
             </Text>

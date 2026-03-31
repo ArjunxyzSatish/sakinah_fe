@@ -1,6 +1,8 @@
-import { View, Text, StyleSheet, ScrollView, Switch } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Switch, TouchableOpacity, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
+import { IslamicPattern, Lantern } from '../components/IslamicElements';
 
 export default function Settings() {
   const { isDark, toggleTheme, colors } = useTheme();
@@ -13,6 +15,7 @@ export default function Settings() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <IslamicPattern color={isDark ? 'rgba(247, 245, 239, 0.03)' : 'rgba(15, 61, 46, 0.04)'} />
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <Text style={[styles.headerTitle, primaryColor]}>{t('nav.settings')}</Text>
       </View>
@@ -32,6 +35,21 @@ export default function Settings() {
               thumbColor={isDark ? colors.background : '#f4f3f4'}
             />
           </View>
+          <View style={[styles.divider, { backgroundColor: colors.cardBorder, width: '100%' }]} />
+          <TouchableOpacity 
+            style={styles.row}
+            onPress={() => {
+              Alert.alert('Reset App', 'This will clear all saved data and take you back to onboarding. Please restart the app after doing this.', [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Reset', style: 'destructive', onPress: async () => {
+                  await AsyncStorage.clear();
+                  Alert.alert('Done', 'Data cleared. Open the Expo terminal and press "r" to reload.');
+                }}
+              ]);
+            }}
+          >
+            <Text style={[styles.rowText, { color: 'red' }]}>Reset App Data</Text>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.sectionHeader}>
@@ -40,9 +58,7 @@ export default function Settings() {
         </View>
 
         <View style={[styles.card, cardStyle]}>
-          <View style={[styles.iconBox, { backgroundColor: colors.cardDarker }]}>
-            <View style={[styles.diamond, { backgroundColor: colors.primary, opacity: 0.6 }]} />
-          </View>
+          <Lantern size={64} color={colors.primary} style={{ opacity: 0.6, marginBottom: 4 }} />
           <Text style={[styles.aboutText, textColor]}>
             {t('settings.aboutDesc')}
           </Text>
