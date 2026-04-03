@@ -1,6 +1,6 @@
 import { Slot, usePathname, useRouter, useRootNavigationState } from 'expo-router';
 import { View, StyleSheet, TouchableOpacity, Text, SafeAreaView } from 'react-native';
-import { Home, MessageCircle, Image as ImageIcon, Settings, Bookmark } from 'lucide-react-native';
+import { Home, MessageCircle, Image as ImageIcon, Settings, Bookmark, Compass, BookOpen } from 'lucide-react-native';
 import { useMascot, MascotProvider } from '../context/MascotContext';
 import { LanguageProvider, useLanguage } from '../context/LanguageContext';
 import { UserProvider, useUser } from '../context/UserContext';
@@ -36,6 +36,8 @@ function AppLayout() {
   const navItems = [
     { path: '/', icon: Home, label: t('nav.home') },
     { path: '/chat', icon: MessageCircle, label: t('nav.reflect') },
+    { path: '/prayer', icon: Compass, label: t('nav.prayer') },
+    { path: '/quran', icon: BookOpen, label: t('nav.quran') },
     { path: '/saved', icon: Bookmark, label: t('nav.saved') },
     { path: '/settings', icon: Settings, label: t('nav.settings') },
   ];

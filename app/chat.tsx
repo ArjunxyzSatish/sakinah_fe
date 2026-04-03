@@ -4,7 +4,6 @@ import { Send } from 'lucide-react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { streamReflection } from '../services/openai';
 import { parseStreamedContent, ParsedContent } from '../utils/parser';
-import { getSystemInstruction } from '../utils/prompts';
 import { useLanguage } from '../context/LanguageContext';
 import { useUser } from '../context/UserContext';
 import { useTheme } from '../context/ThemeContext';
@@ -42,7 +41,7 @@ export default function Chat() {
       const generator = streamReflection(messageText, language);
       let fullResponse = '';
 
-      setMessages(prev => [...prev, { role: 'assistant', content: '', parsed: { raw: '', elements: [] } }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: '', parsed: parseStreamedContent('') }]);
 
       for await (const chunk of generator) {
         fullResponse += chunk;
@@ -66,10 +65,7 @@ export default function Chat() {
         {
           role: 'assistant',
           content: 'Error connecting to network',
-          parsed: {
-            raw: '',
-            elements: [{ type: 'offtopic', content: t('chat.error') }]
-          }
+          parsed: parseStreamedContent(t('chat.error'))
         }
       ]);
     } finally {
@@ -77,7 +73,8 @@ export default function Chat() {
     }
   };
 
-  const renderParsedContent = (parsed: ParsedContent) => {
+  const renderParsedContent = (parsed: ParsedContent, messageIndex: number) => {
+    const isLatestAssistant = messageIndex === messages.length - 1;
     return parsed.elements.map((el, i) => {
       switch (el.type) {
         case 'reflection':
@@ -98,9 +95,22 @@ export default function Chat() {
           );
         case 'question':
           return (
-            <View key={i} style={[styles.questionBox, { backgroundColor: colors.cardDarker, borderColor: colors.border }]}>
-              <Text style={[styles.questionText, { color: colors.primary }]}>{el.content}</Text>
-            </View>
+            <TouchableOpacity
+              key={i}
+              style={[styles.questionBox, { backgroundColor: colors.cardDarker, borderColor: colors.primary + '40' }]}
+              onPress={() => {
+                if (!isLoading && isLatestAssistant) {
+                  handleSend(el.content);
+                }
+              }}
+              activeOpacity={0.7}
+              disabled={isLoading || !isLatestAssistant}
+            >
+              <Text style={[styles.questionText, { color: colors.primary, flex: 1 }]}>{el.content}</Text>
+              {isLatestAssistant && (
+                <Send size={14} color={colors.primary} style={{ opacity: 0.5, marginLeft: 8 }} />
+              )}
+            </TouchableOpacity>
           );
         case 'action':
           return (
@@ -149,7 +159,7 @@ export default function Chat() {
               </View>
             ) : (
               <View style={styles.assistantMessage}>
-                {msg.parsed ? renderParsedContent(msg.parsed) : <Text style={{ color: colors.text }}>{msg.content}</Text>}
+                {msg.parsed ? renderParsedContent(msg.parsed, index) : <Text style={{ color: colors.text }}>{msg.content}</Text>}
               </View>
             )}
           </View>
@@ -281,11 +291,12 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   questionBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
     padding: 20,
     borderRadius: 16,
     borderWidth: 1,
-    borderStyle: 'dashed',
-    marginVertical: 8,
+    marginVertical: 4,
   },
   questionText: {
     fontSize: 15,

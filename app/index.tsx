@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, RefreshControl } 
 import { Bookmark, Image as ImageIcon } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { getDailyVerse, DAILY_VERSES, getRandomVerse } from '../utils/verses';
+import { RTL_LANGUAGES } from '../context/LanguageContext';
 import { generateRandomVerse } from '../services/openai';
 import { useVerse } from '../context/VerseContext';
 import { toggleSaveVerse, isVerseSaved } from '../utils/storage';
@@ -22,7 +23,7 @@ export default function Home() {
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
-      const newVerse = await generateRandomVerse();
+      const newVerse = await generateRandomVerse(language);
       setDailyVerse(newVerse);
     } catch (error) {
       console.error(error);
@@ -96,8 +97,8 @@ export default function Home() {
 
           <Text style={[
             styles.reflection,
-            language === 'ar' && styles.reflectionAr,
-            { writingDirection: language === 'ar' ? 'rtl' : 'ltr', color: colors.text }
+            RTL_LANGUAGES.includes(language) && styles.reflectionAr,
+            { writingDirection: RTL_LANGUAGES.includes(language) ? 'rtl' : 'ltr', color: colors.text }
           ]}>
             {language === 'ar' ? dailyVerse.reflectionAr : dailyVerse.reflection}
           </Text>

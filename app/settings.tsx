@@ -1,17 +1,45 @@
-import { View, Text, StyleSheet, ScrollView, Switch, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Switch, TouchableOpacity, Alert, TextInput, Platform, KeyboardAvoidingView } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useUser } from '../context/UserContext';
 import { IslamicPattern, Lantern } from '../components/IslamicElements';
+import { Bell, Clock, ChevronRight, Trash2 } from 'lucide-react-native';
+import { useState } from 'react';
 
 export default function Settings() {
   const { isDark, toggleTheme, colors } = useTheme();
   const { t } = useLanguage();
+  const { prayerFrequency, prayerTimes, updatePrayerSettings, prayerEnabled, togglePrayer } = useUser();
+  const [showPicker, setShowPicker] = useState<number | null>(null);
 
   const textColor = { color: colors.text };
   const primaryColor = { color: colors.primary };
-  const borderStyle = { borderColor: colors.border };
   const cardStyle = { backgroundColor: colors.card, borderColor: colors.cardBorder };
+
+  const handleFrequencyChange = (newFreq: number) => {
+    updatePrayerSettings(newFreq, prayerTimes);
+  };
+
+  const onTimeChange = (event: any, selectedDate?: Date) => {
+    setShowPicker(null);
+    if (selectedDate && showPicker !== null) {
+      const h = selectedDate.getHours().toString().padStart(2, '0');
+      const m = selectedDate.getMinutes().toString().padStart(2, '0');
+      const newTimes = [...prayerTimes];
+      newTimes[showPicker] = `${h}:${m}`;
+      updatePrayerSettings(prayerFrequency, newTimes);
+    }
+  };
+
+  const getPickerDate = (index: number) => {
+    const [h, m] = (prayerTimes[index] || '12:00').split(':').map(Number);
+    const d = new Date();
+    d.setHours(h);
+    d.setMinutes(m);
+    return d;
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -19,7 +47,9 @@ export default function Settings() {
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <Text style={[styles.headerTitle, primaryColor]}>{t('nav.settings')}</Text>
       </View>
+      
       <ScrollView contentContainerStyle={styles.content}>
+        {/* Appearance Section */}
         <View style={styles.sectionHeader}>
           <View style={[styles.dot, { backgroundColor: colors.dot }]} />
           <Text style={[styles.sectionTitle, { color: colors.primary, opacity: 0.8 }]}>{t('settings.appearance')}</Text>
@@ -35,23 +65,102 @@ export default function Settings() {
               thumbColor={isDark ? colors.background : '#f4f3f4'}
             />
           </View>
-          <View style={[styles.divider, { backgroundColor: colors.cardBorder, width: '100%' }]} />
+        </View>
+
+        {/* Prayer Notifications Section */}
+        <View style={styles.sectionHeader}>
+          <View style={[styles.dot, { backgroundColor: colors.dot }]} />
+          <Text style={[styles.sectionTitle, { color: colors.primary, opacity: 0.8 }]}>{t('settings.prayer.title')}</Text>
+        </View>
+
+        <View style={[styles.card, cardStyle]}>
+          {/* Prayer Enable/Disable Toggle */}
+          <View style={styles.row}>
+            <Text style={[styles.rowText, textColor]}>Prayer Reminders</Text>
+            <Switch 
+              value={prayerEnabled} 
+              onValueChange={togglePrayer} 
+              trackColor={{ true: colors.primary, false: 'rgba(15, 61, 46, 0.2)' }}
+              thumbColor={prayerEnabled ? colors.background : '#f4f3f4'}
+            />
+          </View>
+
+          {prayerEnabled && (
+            <>
+              <View style={[styles.divider, { backgroundColor: colors.cardBorder, width: '100%' }]} />
+              
+              <View style={styles.row}>
+                <Text style={[styles.rowText, textColor]}>{t('prayer.times.count')}</Text>
+                <View style={styles.stepper}>
+                  <TouchableOpacity onPress={() => handleFrequencyChange(Math.max(1, prayerFrequency - 1))} style={styles.stepBtn}>
+                    <Text style={[styles.stepBtnText, primaryColor]}>-</Text>
+                  </TouchableOpacity>
+                  <Text style={[styles.freqValue, primaryColor]}>{prayerFrequency}</Text>
+                  <TouchableOpacity onPress={() => handleFrequencyChange(Math.min(7, prayerFrequency + 1))} style={styles.stepBtn}>
+                    <Text style={[styles.stepBtnText, primaryColor]}>+</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+              
+              <View style={[styles.divider, { backgroundColor: colors.cardBorder, width: '100%' }]} />
+              
+              <View style={styles.timesContainer}>
+                {prayerTimes.slice(0, prayerFrequency).map((time: string, i: number) => (
+                  <View key={i} style={styles.timeRow}>
+                    <TouchableOpacity style={styles.timeHeaderRow} onPress={() => setShowPicker(i)}>
+                      <View style={styles.timeLabelGroup}>
+                        <Clock size={16} color={colors.primary} opacity={0.6} />
+                        <Text style={[styles.timeRowLabel, textColor]}>Prayer {i + 1}</Text>
+                      </View>
+                      <View style={[styles.timeDisplayBox, { borderColor: colors.border }]}>
+                        <Text style={[styles.timeValueText, primaryColor]}>{time}</Text>
+                      </View>
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+
+              {showPicker !== null && (
+                <DateTimePicker
+                  value={getPickerDate(showPicker)}
+                  mode="time"
+                  is24Hour={true}
+                  display={Platform.OS === 'android' ? 'spinner' : 'default'}
+                  onChange={onTimeChange}
+                />
+              )}
+            </>
+          )}
+        </View>
+
+        {/* Data Management Section */}
+        <View style={styles.sectionHeader}>
+          <View style={[styles.dot, { backgroundColor: colors.dot }]} />
+          <Text style={[styles.sectionTitle, { color: colors.primary, opacity: 0.8 }]}>Data Management</Text>
+        </View>
+
+        <View style={[styles.card, cardStyle, { paddingVertical: 16 }]}>
           <TouchableOpacity 
-            style={styles.row}
+            style={[styles.row, { paddingHorizontal: 0 }]}
             onPress={() => {
               Alert.alert('Reset App', 'This will clear all saved data and take you back to onboarding. Please restart the app after doing this.', [
                 { text: 'Cancel', style: 'cancel' },
                 { text: 'Reset', style: 'destructive', onPress: async () => {
                   await AsyncStorage.clear();
-                  Alert.alert('Done', 'Data cleared. Open the Expo terminal and press "r" to reload.');
+                  Alert.alert('Done', 'Data cleared. Please restart the app.');
                 }}
               ]);
             }}
           >
-            <Text style={[styles.rowText, { color: 'red' }]}>Reset App Data</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <Trash2 size={20} color="red" opacity={0.8} />
+              <Text style={[styles.rowText, { color: 'red', opacity: 0.8 }]}>Reset App Data</Text>
+            </View>
+            <ChevronRight size={20} color="red" opacity={0.3} />
           </TouchableOpacity>
         </View>
 
+        {/* About Section */}
         <View style={styles.sectionHeader}>
           <View style={[styles.dot, { backgroundColor: colors.dot }]} />
           <Text style={[styles.sectionTitle, { color: colors.primary, opacity: 0.8 }]}>{t('settings.about')}</Text>
@@ -85,7 +194,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 24,
-    paddingBottom: 120,
+    paddingBottom: 150,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -109,9 +218,9 @@ const styles = StyleSheet.create({
   card: {
     borderWidth: 1,
     borderRadius: 24,
-    padding: 32,
+    padding: 24,
     alignItems: 'center',
-    gap: 24,
+    gap: 20,
   },
   row: {
     width: '100%',
@@ -123,17 +232,60 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
   },
-  iconBox: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+  stepper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  stepBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(15, 61, 46, 0.05)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  diamond: {
-    width: 12,
-    height: 12,
-    transform: [{ rotate: '45deg' }],
+  stepBtnText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  freqValue: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  timesContainer: {
+    width: '100%',
+    gap: 12,
+  },
+  timeRow: {
+    width: '100%',
+  },
+  timeHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  timeLabelGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  timeDisplayBox: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderRadius: 12,
+    backgroundColor: 'rgba(15, 61, 46, 0.03)',
+  },
+  timeValueText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  timeRowLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    opacity: 0.7,
   },
   aboutText: {
     fontFamily: 'Georgia',
