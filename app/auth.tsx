@@ -95,7 +95,7 @@ export default function AuthScreen() {
       setLoading(true);
 
       const redirectUrl = AuthSession.makeRedirectUri({ scheme: 'sakinah' });
-      console.log('Redirect URI:', redirectUrl);
+      // console.log('Redirect URI:', redirectUrl);
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -269,14 +269,14 @@ export default function AuthScreen() {
           </Text>
         </TouchableOpacity>
 
-        <View style={{ marginTop: 20, alignItems: 'center' }}>
+        {/* <View style={{ marginTop: 20, alignItems: 'center' }}>
           <Text style={{ color: colors.text, opacity: 0.5, fontSize: 10 }}>
             Redirect URI (Add to Supabase):
           </Text>
           <Text style={{ color: colors.primary, fontSize: 10, textAlign: 'center' }}>
             {generatedUri}
           </Text>
-        </View>
+        </View> */}
       </ScrollView>
     </KeyboardAvoidingView>
   );
