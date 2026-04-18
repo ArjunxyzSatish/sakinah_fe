@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Alert, Linking } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Linking } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import * as AuthSession from 'expo-auth-session';
@@ -10,6 +10,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
 import { IslamicPattern, Crescent } from '../components/IslamicElements';
 import { ChevronLeft, Mail, Lock, User, Chrome } from 'lucide-react-native';
+import { useAppAlert } from '../components/AppAlert';
 // Google Sign-in is imported dynamically to prevent crashes in Expo Go
 
 export default function AuthScreen() {
@@ -25,6 +26,7 @@ export default function AuthScreen() {
   const router = useRouter();
   const { colors, isDark } = useTheme();
   const { t } = useLanguage();
+  const { showAlert, alertElement } = useAppAlert();
 
   useEffect(() => {
     // Handle OAuth callback if app was opened/resumed via deep link with tokens
@@ -56,7 +58,7 @@ export default function AuthScreen() {
 
   const handleEmailAuth = async () => {
     if (!email || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
+      showAlert('Missing Fields', 'Please fill in all fields before continuing.', undefined, '✏️');
       return;
     }
 
@@ -80,11 +82,11 @@ export default function AuthScreen() {
           },
         });
         if (error) throw error;
-        Alert.alert('Success', 'Check your email for the confirmation link!');
+        showAlert('Check Your Email', 'A confirmation link has been sent to your email address.', undefined, '📬');
       }
       router.replace('/');
     } catch (error: any) {
-      Alert.alert('Auth Error', error.message);
+      showAlert('Sign-in Error', error.message, undefined, '⚠️');
     } finally {
       setLoading(false);
     }
@@ -94,8 +96,8 @@ export default function AuthScreen() {
     try {
       setLoading(true);
 
-      const redirectUrl = AuthSession.makeRedirectUri({ scheme: 'sakinah' });
-      // console.log('Redirect URI:', redirectUrl);
+      // Fixed HTTPS redirect that always works — bridge page sends user back via sakinah:// deep link
+      const redirectUrl = 'https://sakinah-be.onrender.com/auth/callback/';
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -108,9 +110,9 @@ export default function AuthScreen() {
       if (error) throw error;
       if (!data?.url) throw new Error('No OAuth URL returned from Supabase');
 
-      // Set up the deep-link listener BEFORE opening the browser
-      // Android intent system will intercept the exp:// redirect and fire this
+      // Listen for the deep link that the bridge page sends back: sakinah://auth/callback#...
       const subscription = Linking.addEventListener('url', async ({ url }) => {
+        if (!url.includes('auth/callback')) return; // ignore unrelated links
         subscription.remove();
         setLoading(true);
         try {
@@ -134,17 +136,17 @@ export default function AuthScreen() {
           }
           throw new Error('No tokens received');
         } catch (e: any) {
-          Alert.alert('Sign-in Error', e.message || 'Failed to complete sign-in.');
+          showAlert('Sign-in Error', e.message || 'Failed to complete sign-in.');
         } finally {
           setLoading(false);
         }
       });
 
-      // Open in the real external browser so Android can intercept the exp:// redirect
+      // Open in the external browser
       await Linking.openURL(data.url);
 
     } catch (error: any) {
-      Alert.alert('Sign-in Error', error.message || 'Google sign-in failed.');
+      showAlert('Sign-in Error', error.message || 'Google sign-in failed.');
       console.log('OAuth error:', error);
       setLoading(false);
     }
@@ -155,6 +157,7 @@ export default function AuthScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={[styles.container, { backgroundColor: colors.background }]}
     >
+      {alertElement}
       <IslamicPattern color={isDark ? 'rgba(247, 245, 239, 0.03)' : 'rgba(15, 61, 46, 0.04)'} />
 
       <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>

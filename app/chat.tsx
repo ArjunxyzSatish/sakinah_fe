@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import { Send, Trash2 } from 'lucide-react-native';
 import { streamReflection, saveChat } from '../services/openai';
 import { parseStreamedContent, ParsedContent } from '../utils/parser';
@@ -19,6 +19,7 @@ import { useTheme } from '../context/ThemeContext';
 import { IslamicPattern, Mosque } from '../components/IslamicElements';
 import { BlurView } from 'expo-blur';
 import Paywall from '../components/Paywall';
+import { useAppAlert } from '../components/AppAlert';
 
 export default function Chat() {
   const [messages, setMessages] = useState<Array<{ role: string, content: string, parsed?: ParsedContent }>>([]);
@@ -28,6 +29,7 @@ export default function Chat() {
   const [showLimitOverlay, setShowLimitOverlay] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
   const [visuallyClear, setVisuallyClear] = useState(false);
+  const { showAlert, alertElement } = useAppAlert();
   const scrollViewRef = useRef<ScrollView>(null);
 
   const params = useLocalSearchParams();
@@ -146,7 +148,7 @@ export default function Chat() {
   };
 
   const handleClearChat = () => {
-    Alert.alert(
+    showAlert(
       'Clear Conversation',
       'This will clear your chat history.',
       [
@@ -157,7 +159,8 @@ export default function Chat() {
             setVisuallyClear(true);
           }
         },
-      ]
+      ],
+      '🗑️'
     );
   };
 
@@ -221,6 +224,7 @@ export default function Chat() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <IslamicPattern color={isDark ? 'rgba(247, 245, 239, 0.03)' : 'rgba(15, 61, 46, 0.04)'} />
+      {alertElement}
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <Text style={[styles.headerTitle, { color: colors.primary }]}>{t('nav.reflect')}</Text>
       </View>

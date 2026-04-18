@@ -1,15 +1,17 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { BookmarkMinus } from 'lucide-react-native';
 import { getSavedVerses, removeSavedVerse, SavedVerse } from '../utils/storage';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 import { IslamicPattern, Crescent } from '../components/IslamicElements';
+import { useAppAlert } from '../components/AppAlert';
 
 export default function Saved() {
   const [verses, setVerses] = useState<SavedVerse[]>([]);
   const { language, t } = useLanguage();
   const { colors, isDark } = useTheme();
+  const { showAlert, alertElement } = useAppAlert();
 
   const loadVerses = useCallback(async () => {
     const saved = await getSavedVerses();
@@ -21,20 +23,21 @@ export default function Saved() {
   }, [loadVerses]);
 
   const handleRemove = (reference: string) => {
-    Alert.alert(
+    showAlert(
       t('saved.remove'),
       t('saved.confirm'),
       [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Remove', 
+        {
+          text: 'Remove',
           style: 'destructive',
           onPress: async () => {
             await removeSavedVerse(reference);
             loadVerses();
           }
         }
-      ]
+      ],
+      '🔖'
     );
   };
 
@@ -79,6 +82,7 @@ export default function Saved() {
           ))
         )}
       </ScrollView>
+      {alertElement}
     </View>
   );
 }

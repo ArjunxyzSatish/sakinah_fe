@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, Switch, TouchableOpacity, Alert, TextInput, Platform, KeyboardAvoidingView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Switch, TouchableOpacity, TextInput, Platform, KeyboardAvoidingView } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../context/ThemeContext';
@@ -6,6 +6,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { useUser } from '../context/UserContext';
 import { IslamicPattern, Lantern } from '../components/IslamicElements';
 import { Bell, Clock, ChevronRight, Trash2, User, LogOut, LogIn } from 'lucide-react-native';
+import { useAppAlert } from '../components/AppAlert';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 
@@ -24,6 +25,7 @@ export default function Settings() {
   } = useUser();
   const [showPicker, setShowPicker] = useState<number | null>(null);
   const router = useRouter();
+  const { showAlert, alertElement } = useAppAlert();
 
   const textColor = { color: colors.text };
   const primaryColor = { color: colors.primary };
@@ -154,13 +156,18 @@ export default function Settings() {
           <TouchableOpacity 
             style={[styles.row, { paddingHorizontal: 0 }]}
             onPress={() => {
-              Alert.alert('Reset App', 'This will clear all saved data and take you back to onboarding. Please restart the app after doing this.', [
-                { text: 'Cancel', style: 'cancel' },
-                { text: 'Reset', style: 'destructive', onPress: async () => {
-                  await AsyncStorage.clear();
-                  Alert.alert('Done', 'Data cleared. Please restart the app.');
-                }}
-              ]);
+              showAlert(
+                'Reset App Data',
+                'This will clear all saved data and take you back to onboarding. Please restart the app after doing this.',
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  { text: 'Reset', style: 'destructive', onPress: async () => {
+                    await AsyncStorage.clear();
+                    showAlert('Data Cleared', 'Please restart the app to complete the reset.', undefined, '✅');
+                  }},
+                ],
+                '🗑️'
+              );
             }}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
@@ -203,7 +210,7 @@ export default function Settings() {
                 style={[styles.row, { paddingVertical: 8 }]}
                 onPress={async () => {
                   await signOut();
-                  Alert.alert('Signed Out', 'You have been successfully signed out.');
+                  showAlert('Signed Out', 'You have been successfully signed out.', undefined, '👋');
                 }}
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
@@ -245,6 +252,7 @@ export default function Settings() {
           <Text style={[styles.version, { color: colors.text }]}>{t('settings.version')}</Text>
         </View>
       </ScrollView>
+      {alertElement}
     </View>
   );
 }

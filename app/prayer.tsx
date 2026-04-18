@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Linking, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Linking, Platform } from 'react-native';
 import { Magnetometer } from 'expo-sensors';
 import * as Location from 'expo-location';
 import * as Haptics from 'expo-haptics';
@@ -11,6 +11,7 @@ import { IslamicPattern, Mandala, Mosque } from '../components/IslamicElements';
 import { QiblaCompass } from '../components/QiblaCompass';
 import { Compass, Clock, Bell, MapPin, Settings } from 'lucide-react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import { useAppAlert } from '../components/AppAlert';
 
 const { width } = Dimensions.get('window');
 
@@ -19,6 +20,7 @@ export default function PrayerScreen() {
   const { t, language } = useLanguage();
   const { prayerTimes, prayerFrequency, prayerEnabled } = useUser();
   const router = useRouter();
+  const { showAlert, alertElement } = useAppAlert();
   const [heading, setHeading] = useState(0);
   const [qiblaAngle, setQiblaAngle] = useState(0);
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
@@ -123,13 +125,14 @@ export default function PrayerScreen() {
         setLocationDenied(true);
       }
     } else if (status === 'denied') {
-      Alert.alert(
-        'Location Permission Required',
-        'Location access was previously denied. To use the Qibla compass, please enable location permission in your device settings.',
+      showAlert(
+        'Location Required',
+        'Location access was previously denied. To use the Qibla compass, please enable location in your device settings.',
         [
           { text: 'Not Now', style: 'cancel' },
           { text: 'Open Settings', onPress: () => Linking.openSettings() },
-        ]
+        ],
+        '📍'
       );
     } else {
       checkLocationOnFocus();
@@ -287,6 +290,7 @@ export default function PrayerScreen() {
           </View>
         )}
       </ScrollView>
+      {alertElement}
     </View>
   );
 }

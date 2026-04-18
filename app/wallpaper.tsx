@@ -1,11 +1,12 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Switch, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Switch } from 'react-native';
 import { Colors } from '../constants/Colors';
 import { useVerse } from '../context/VerseContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 import { Crescent } from '../components/IslamicElements';
 import { Download } from 'lucide-react-native';
+import { useAppAlert } from '../components/AppAlert';
 import ViewShot from 'react-native-view-shot';
 import * as MediaLibrary from 'expo-media-library';
 
@@ -18,25 +19,25 @@ export default function Wallpaper() {
   const { t } = useLanguage();
   const { colors: appColors } = useTheme();
   const { currentVerse: dailyVerse } = useVerse();
+  const { showAlert, alertElement } = useAppAlert();
 
   const handleSave = async () => {
     try {
       if (permissionResponse?.status !== 'granted') {
         const { status } = await requestPermission();
         if (status !== 'granted') {
-          Alert.alert('Permission needed', 'Please grant photo gallery permission to save the wallpaper.');
+          showAlert('Permission Required', 'Please grant photo gallery permission to save the wallpaper.', undefined, '🖼️');
           return;
         }
       }
-
       if (viewShotRef.current?.capture) {
         const uri = await viewShotRef.current.capture();
         await MediaLibrary.saveToLibraryAsync(uri);
-        Alert.alert('Success', 'Wallpaper saved to your gallery!');
+        showAlert('Saved!', 'Your wallpaper has been saved to the gallery.', undefined, '✅');
       }
     } catch (error) {
       console.error(error);
-      Alert.alert('Error', 'Failed to save wallpaper.');
+      showAlert('Error', 'Failed to save wallpaper. Please try again.', undefined, '⚠️');
     }
   };
 
@@ -124,6 +125,7 @@ export default function Wallpaper() {
           <Text style={[styles.saveBtnText, { color: appColors.background }]}>{t('wallpaper.save')}</Text>
         </TouchableOpacity>
       </View>
+      {alertElement}
     </View>
   );
 }
