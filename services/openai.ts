@@ -1,6 +1,6 @@
 import { Language } from '../context/LanguageContext';
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://10.83.228.127:8000/api';
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export async function* streamReflection(message: string, language: Language = 'en') {
   const chunks: string[] = [];
