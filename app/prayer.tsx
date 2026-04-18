@@ -2,11 +2,13 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Linking, Alert, Platform } from 'react-native';
 import { Magnetometer } from 'expo-sensors';
 import * as Location from 'expo-location';
+import * as Haptics from 'expo-haptics';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useUser } from '../context/UserContext';
 import { IslamicPattern, Mandala, Mosque } from '../components/IslamicElements';
+import { QiblaCompass } from '../components/QiblaCompass';
 import { Compass, Clock, Bell, MapPin, Settings } from 'lucide-react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
@@ -23,8 +25,10 @@ export default function PrayerScreen() {
   const [locationDenied, setLocationDenied] = useState(false);
   const [permissionChecked, setPermissionChecked] = useState(false);
   const hasAutoPrompted = useRef(false);
+  const wasFacingQibla = useRef(false);
 
   const rotation = useSharedValue(0);
+  const glowOpacity = useSharedValue(0);
 
   // Auto-prompt for location on first visit
   const autoPromptLocation = useCallback(async () => {
@@ -145,7 +149,23 @@ export default function PrayerScreen() {
     Magnetometer.setUpdateInterval(100);
 
     return () => subscription?.remove();
-  }, []);
+  }, [rotation]);
+
+  useEffect(() => {
+    if (qiblaAngle === 0 && heading === 0) return;
+    
+    const diff = Math.abs(qiblaAngle - heading);
+    const isFacing = diff < 5 || diff > 355;
+    
+    if (isFacing && !wasFacingQibla.current) {
+      wasFacingQibla.current = true;
+      glowOpacity.value = withSpring(1);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    } else if (!isFacing && wasFacingQibla.current) {
+      wasFacingQibla.current = false;
+      glowOpacity.value = withSpring(0);
+    }
+  }, [heading, qiblaAngle, glowOpacity]);
 
   const calculateQibla = (lat: number, lon: number) => {
     const mLat = 21.4225 * (Math.PI / 180);
@@ -193,35 +213,13 @@ export default function PrayerScreen() {
         </View>
       ) : (
         <>
-          <View style={styles.compassContainer}>
-            <View style={styles.compassWrapper}>
-              <Animated.View style={[styles.compassRing, animatedStyles, { borderColor: colors.border }]}>
-                <Text style={[styles.dirText, { top: 8, left: 0, right: 0, textAlign: 'center', color: colors.text, opacity: 0.5 }]}>N</Text>
-                <Text style={[styles.dirText, { right: 8, top: 0, bottom: 0, textAlignVertical: 'center', lineHeight: 220, textAlign: 'right', color: colors.text, opacity: 0.5 }]}>E</Text>
-                <Text style={[styles.dirText, { bottom: 8, left: 0, right: 0, textAlign: 'center', color: colors.text, opacity: 0.5 }]}>S</Text>
-                <Text style={[styles.dirText, { left: 8, top: 0, bottom: 0, textAlignVertical: 'center', lineHeight: 220, color: colors.text, opacity: 0.5 }]}>W</Text>
-              </Animated.View>
-
-              <Animated.View style={[styles.qiblaPointer, qiblaPointerStyle]}>
-                <View style={[styles.pointerArrow, { borderBottomColor: colors.primary }]} />
-                <Mosque size={32} color={colors.primary} style={styles.mosqueIcon} />
-              </Animated.View>
-
-              <View style={[styles.centerDot, { backgroundColor: colors.primary }]} />
-            </View>
-
-            <View style={styles.infoRow}>
-              <View style={styles.stat}>
-                <Text style={[styles.statLabel, { color: colors.text }]}>Heading</Text>
-                <Text style={[styles.statValue, { color: colors.primary }]}>{heading}°</Text>
-              </View>
-              <View style={styles.divider} />
-              <View style={styles.stat}>
-                <Text style={[styles.statLabel, { color: colors.text }]}>Qibla</Text>
-                <Text style={[styles.statValue, { color: colors.primary }]}>{qiblaAngle}°</Text>
-              </View>
-            </View>
-          </View>
+          <QiblaCompass
+            glowOpacity={glowOpacity}
+            animatedStyles={animatedStyles}
+            qiblaPointerStyle={qiblaPointerStyle}
+            heading={heading}
+            qiblaAngle={qiblaAngle}
+          />
 
           {location ? (
             <View style={styles.locationTag}>

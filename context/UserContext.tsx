@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { schedulePrayerNotifications, cancelAllNotifications } from '../utils/notifications';
+import { supabase } from '../utils/supabase';
+import { Session, User } from '@supabase/supabase-js';
 
 export interface QuranBookmark {
   surah: number;
@@ -13,8 +15,14 @@ interface UserContextType {
   completeOnboarding: () => void;
   reflectionCount: number;
   incrementReflectionCount: () => void;
+  llmCallCount: number;
+  incrementLlmCallCount: () => void;
+  dailyVerseCount: number;
+  incrementDailyVerseCount: () => void;
   hasActiveSubscription: boolean;
   subscribe: () => void;
+  isSubscribed: boolean;
+  markSubscribed: (plan: 'weekly' | 'monthly', expiresAt: number) => Promise<void>;
   onboardingContext: string[];
   setOnboardingContext: (context: string[]) => void;
   prayerFrequency: number;
@@ -26,6 +34,9 @@ interface UserContextType {
   addBookmark: (bookmark: QuranBookmark) => void;
   removeBookmark: (surah: number, ayah: number) => void;
   isLoaded: boolean;
+  session: Session | null;
+  user: User | null;
+  signOut: () => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -33,18 +44,25 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
   const [reflectionCount, setReflectionCount] = useState(0);
+  const [llmCallCount, setLlmCallCount] = useState(0);
+  const [dailyVerseCount, setDailyVerseCount] = useState(0);
   const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
+  const [isSubscribed, setIsSubscribed] = useState(false);
   const [onboardingContext, setOnboardingContext] = useState<string[]>([]);
   const [prayerFrequency, setPrayerFrequency] = useState(5);
   const [prayerTimes, setPrayerTimes] = useState<string[]>(['05:30', '13:00', '16:30', '18:45', '20:15', '21:00', '22:00']);
   const [prayerEnabled, setPrayerEnabled] = useState(true);
   const [bookmarks, setBookmarks] = useState<QuranBookmark[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
       const onboarding = await AsyncStorage.getItem('sakinah_onboarding_complete');
       const count = await AsyncStorage.getItem('sakinah_reflection_count');
+      const llmCount = await AsyncStorage.getItem('sakinah_llm_call_count');
+      const verseCount = await AsyncStorage.getItem('sakinah_daily_verse_count');
       const sub = await AsyncStorage.getItem('sakinah_subscription');
       const context = await AsyncStorage.getItem('sakinah_onboarding_context');
       const freq = await AsyncStorage.getItem('sakinah_prayer_frequency');
@@ -52,9 +70,35 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       const enabled = await AsyncStorage.getItem('sakinah_prayer_enabled');
       const bookmarksData = await AsyncStorage.getItem('sakinah_bookmarks');
 
+      const today = new Date().toDateString();
+      const lastUsageDate = await AsyncStorage.getItem('sakinah_last_usage_date');
+
       if (onboarding === 'true') setHasCompletedOnboarding(true);
-      if (count) setReflectionCount(parseInt(count, 10));
       if (sub === 'true') setHasActiveSubscription(true);
+      if (context) setOnboardingContext(JSON.parse(context));
+      if (count) setReflectionCount(parseInt(count, 10));
+
+      // Check premium subscription (stored after payment)
+      const subExpiry = await AsyncStorage.getItem('sakinah_sub_expires_at');
+      if (subExpiry && parseInt(subExpiry, 10) > Date.now()) {
+        setIsSubscribed(true);
+      } else if (subExpiry) {
+        // Expired — clear it
+        await AsyncStorage.removeItem('sakinah_sub_expires_at');
+        await AsyncStorage.removeItem('sakinah_sub_plan');
+        setIsSubscribed(false);
+      }
+
+      if (lastUsageDate !== today) {
+        await AsyncStorage.setItem('sakinah_last_usage_date', today);
+        await AsyncStorage.setItem('sakinah_llm_call_count', '0');
+        await AsyncStorage.setItem('sakinah_daily_verse_count', '0');
+        setLlmCallCount(0);
+        setDailyVerseCount(0);
+      } else {
+        if (llmCount) setLlmCallCount(parseInt(llmCount, 10));
+        if (verseCount) setDailyVerseCount(parseInt(verseCount, 10));
+      }
       if (context) setOnboardingContext(JSON.parse(context));
 
       const loadedFreq = freq ? parseInt(freq, 10) : 5;
@@ -71,9 +115,24 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         schedulePrayerNotifications(loadedTimes.slice(0, loadedFreq));
       }
 
+      // Supabase session initialization
+      const { data: { session: initialSession } } = await supabase.auth.getSession();
+      setSession(initialSession);
+      setUser(initialSession?.user ?? null);
+
       setIsLoaded(true);
     };
     loadData();
+
+    // Listen for auth changes
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
   }, []);
 
   const completeOnboarding = async () => {
@@ -87,9 +146,28 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     await AsyncStorage.setItem('sakinah_reflection_count', newCount.toString());
   };
 
+  const incrementLlmCallCount = async () => {
+    const newCount = llmCallCount + 1;
+    setLlmCallCount(newCount);
+    await AsyncStorage.setItem('sakinah_llm_call_count', newCount.toString());
+  };
+
+  const incrementDailyVerseCount = async () => {
+    const newCount = dailyVerseCount + 1;
+    setDailyVerseCount(newCount);
+    await AsyncStorage.setItem('sakinah_daily_verse_count', newCount.toString());
+  };
+
   const subscribe = async () => {
     setHasActiveSubscription(true);
     await AsyncStorage.setItem('sakinah_subscription', 'true');
+  };
+
+  const markSubscribed = async (plan: 'weekly' | 'monthly', expiresAt: number) => {
+    setIsSubscribed(true);
+    setHasActiveSubscription(true);
+    await AsyncStorage.setItem('sakinah_sub_plan', plan);
+    await AsyncStorage.setItem('sakinah_sub_expires_at', expiresAt.toString());
   };
 
   const updateOnboardingContext = async (context: string[]) => {
@@ -134,6 +212,10 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     await AsyncStorage.setItem('sakinah_bookmarks', JSON.stringify(newBookmarks));
   };
 
+  const signOut = async () => {
+    await supabase.auth.signOut();
+  };
+
   if (!isLoaded) return null;
 
   return (
@@ -143,8 +225,14 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         completeOnboarding,
         reflectionCount,
         incrementReflectionCount,
+        llmCallCount,
+        incrementLlmCallCount,
+        dailyVerseCount,
+        incrementDailyVerseCount,
         hasActiveSubscription,
         subscribe,
+        isSubscribed,
+        markSubscribed,
         onboardingContext,
         setOnboardingContext: updateOnboardingContext,
         prayerFrequency,
@@ -156,6 +244,9 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         addBookmark,
         removeBookmark,
         isLoaded,
+        session,
+        user,
+        signOut,
       }}
     >
       {children}

@@ -16,11 +16,11 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [mode, setMode] = useState<ThemeMode>('light');
+  const [mode, setMode] = useState<ThemeMode>('dark');
 
   useEffect(() => {
     AsyncStorage.getItem('sakinah_theme').then((savedTheme) => {
-      if (savedTheme === 'dark') setMode('dark');
+      if (savedTheme === 'light') setMode('light');
     });
   }, []);
 

@@ -31,7 +31,7 @@ function AppLayout() {
     }
   }, [langLoaded, userLoaded, hasCompletedOnboarding, pathname, rootNavigationState?.key]);
 
-  const isNavigationVisible = pathname !== '/onboarding' && langLoaded && userLoaded;
+  const isNavigationVisible = pathname !== '/onboarding' && pathname !== '/auth' && langLoaded && userLoaded;
 
   const navItems = [
     { path: '/', icon: Home, label: t('nav.home') },

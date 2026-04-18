@@ -5,9 +5,13 @@ import { useRouter } from 'expo-router';
 import { useUser } from '../context/UserContext';
 import { useLanguage, LANGUAGE_NAMES, LANGUAGE_DESCRIPTIONS, INDIAN_LANGUAGES, Language } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
-import { IslamicPattern, Crescent, OpenBook, Mandala } from '../components/IslamicElements';
-import { Check, ChevronDown, ChevronUp, Bell, Compass, Clock } from 'lucide-react-native';
+import { IslamicPattern, Crescent, OpenBook, Mandala, Mosque } from '../components/IslamicElements';
+import { QiblaCompass } from '../components/QiblaCompass';
+import { Check, ChevronDown, ChevronUp, Bell, Compass, Clock, ChevronLeft } from 'lucide-react-native';
 import * as Notifications from 'expo-notifications';
+import { Magnetometer } from 'expo-sensors';
+import * as Haptics from 'expo-haptics';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
 const TOPICS = [
   'anxiety', 'gratitude', 'patience', 'decision-making', 'grief', 'purpose', 'relationships', 'forgiveness', 'inner-peace', 'hardship'
@@ -25,6 +29,51 @@ export default function Onboarding() {
   const { completeOnboarding, updatePrayerSettings, setOnboardingContext, togglePrayer } = useUser();
   const { setLanguage, t, language, isIndia } = useLanguage();
   const { colors, isDark } = useTheme();
+
+  const previewHeading = useSharedValue(0);
+  const previewGlowOpacity = useSharedValue(0);
+  const [headingState, setHeadingState] = useState(0);
+  const previewQiblaAngle = 45; // Fixed Qibla angle for preview
+  const wasFacingPreview = React.useRef(false);
+
+  React.useEffect(() => {
+    let subscription: any;
+    if (step === 2) {
+      subscription = Magnetometer.addListener(result => {
+        const { x, y } = result;
+        let angle = Math.atan2(y, x) * (180 / Math.PI);
+        if (angle < 0) angle += 360;
+        const rounded = Math.round(angle);
+        setHeadingState(rounded);
+        previewHeading.value = withSpring(-angle);
+      });
+      Magnetometer.setUpdateInterval(100);
+    }
+    return () => subscription?.remove();
+  }, [step]);
+
+  React.useEffect(() => {
+    if (step !== 2) return;
+    const diff = Math.abs(previewQiblaAngle - headingState);
+    const isFacing = diff < 5 || diff > 355;
+    
+    if (isFacing && !wasFacingPreview.current) {
+      wasFacingPreview.current = true;
+      previewGlowOpacity.value = withSpring(1);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    } else if (!isFacing && wasFacingPreview.current) {
+      wasFacingPreview.current = false;
+      previewGlowOpacity.value = withSpring(0);
+    }
+  }, [headingState, step]);
+
+  const previewAnimatedStyles = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${previewHeading.value}deg` }],
+  }));
+
+  const previewQiblaPointerStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${previewHeading.value + previewQiblaAngle}deg` }],
+  }));
 
   const handleTopicToggle = (topic: string) => {
     setSelectedTopics(prev => 
@@ -64,13 +113,17 @@ export default function Onboarding() {
 
   const finish = async () => {
     if (selectedTopics.length === 0) return;
-    
     await updatePrayerSettings(freq, times);
     await setOnboardingContext(selectedTopics);
     await completeOnboarding();
-    
     const prompt = `I am seeking reflection on: ${selectedTopics.join(', ')}.`;
     router.replace({ pathname: '/chat', params: { initialMessage: prompt } });
+  };
+
+  const skipTopics = async () => {
+    await updatePrayerSettings(freq, times);
+    await completeOnboarding();
+    router.replace('/');
   };
 
   const selectLanguage = async (lang: Language) => {
@@ -121,15 +174,25 @@ export default function Onboarding() {
   if (step === 2) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background, padding: 24 }]}>
-        <View style={styles.stepHeader}>
-          <Mandala size={120} color={colors.primary} style={{ opacity: 0.8 }} />
-          <Text style={[styles.title, { color: colors.primary, marginTop: 24 }]}>{t('onboarding.qibla.title')}</Text>
-          <Text style={[styles.description, { color: colors.text, marginBottom: 12 }]}>{t('onboarding.qibla.desc')}</Text>
+        <TouchableOpacity style={styles.backBtnAbs} onPress={() => setStep(step - 1)}>
+          <ChevronLeft size={28} color={colors.primary} />
+        </TouchableOpacity>
+        <View style={[styles.stepHeader, { marginTop: 20 }]}>
+          <Mandala size={100} color={colors.primary} style={{ opacity: 0.8 }} />
+          <Text style={[styles.title, { color: colors.primary, marginTop: 16 }]}>{t('onboarding.qibla.title')}</Text>
+          <Text style={[styles.description, { color: colors.text, marginBottom: 8 }]}>{t('onboarding.qibla.desc')}</Text>
           <Text style={[styles.description, { color: colors.text, opacity: 0.6, fontSize: 14 }]}>
             Rotate your phone to align the compass. A gentle vibration and visual glow will let you know when you're facing exactly toward the Kaaba in Makkah.
           </Text>
         </View>
-        <Compass size={180} color={isDark ? 'rgba(247, 245, 239, 0.1)' : 'rgba(15, 61, 46, 0.1)'} style={styles.bgIcon} />
+        <View style={{ marginTop: 0, transform: [{scale: 0.85}] }}>
+          <QiblaCompass
+            glowOpacity={previewGlowOpacity}
+            animatedStyles={previewAnimatedStyles}
+            qiblaPointerStyle={previewQiblaPointerStyle}
+            hideStats={true}
+          />
+        </View>
         <View style={styles.footer}>
           <TouchableOpacity style={[styles.continueBtn, { backgroundColor: colors.primary }]} onPress={nextStep}>
             <Text style={[styles.continueText, { color: colors.background }]}>{t('onboarding.continue')}</Text>
@@ -143,6 +206,9 @@ export default function Onboarding() {
   if (step === 3) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <TouchableOpacity style={styles.backBtnAbs} onPress={() => setStep(step - 1)}>
+          <ChevronLeft size={28} color={colors.primary} />
+        </TouchableOpacity>
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <Bell size={64} color={colors.primary} style={{ alignSelf: 'center', marginBottom: 24 }} />
           <Text style={[styles.title, { color: colors.primary }]}>{t('onboarding.notifications.title')}</Text>
@@ -209,6 +275,9 @@ export default function Onboarding() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
+        <TouchableOpacity style={[styles.backBtnAbs, { top: 24 }]} onPress={() => setStep(step - 1)}>
+          <ChevronLeft size={28} color={colors.primary} />
+        </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.primary }]}>Step 4 of 4</Text>
       </View>
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -228,8 +297,15 @@ export default function Onboarding() {
         </View>
       </ScrollView>
       <View style={[styles.footer, { borderTopColor: colors.border, backgroundColor: colors.background }]}>
-        <TouchableOpacity style={[styles.continueBtn, { backgroundColor: colors.primary }, selectedTopics.length === 0 && { opacity: 0.5 }]} onPress={finish} disabled={selectedTopics.length === 0}>
+        <TouchableOpacity
+          style={[styles.continueBtn, { backgroundColor: colors.primary }, selectedTopics.length === 0 && { opacity: 0.5 }]}
+          onPress={finish}
+          disabled={selectedTopics.length === 0}
+        >
           <Text style={[styles.continueText, { color: colors.background }]}>{t('onboarding.start')}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.skipBtn} onPress={skipTopics}>
+          <Text style={[styles.skipText, { color: colors.text }]}>Skip for now</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -279,4 +355,5 @@ const styles = StyleSheet.create({
   continueText: { fontSize: 14, fontWeight: 'bold', letterSpacing: 2, textTransform: 'uppercase' },
   skipBtn: { alignItems: 'center', paddingVertical: 8 },
   skipText: { fontSize: 13, fontWeight: '500', opacity: 0.5 },
+  backBtnAbs: { position: 'absolute', top: 50, left: 24, zIndex: 10 },
 });

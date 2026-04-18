@@ -5,14 +5,25 @@ import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useUser } from '../context/UserContext';
 import { IslamicPattern, Lantern } from '../components/IslamicElements';
-import { Bell, Clock, ChevronRight, Trash2 } from 'lucide-react-native';
+import { Bell, Clock, ChevronRight, Trash2, User, LogOut, LogIn } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 
 export default function Settings() {
   const { isDark, toggleTheme, colors } = useTheme();
   const { t } = useLanguage();
-  const { prayerFrequency, prayerTimes, updatePrayerSettings, prayerEnabled, togglePrayer } = useUser();
+  const { 
+    prayerFrequency, 
+    prayerTimes, 
+    updatePrayerSettings, 
+    prayerEnabled, 
+    togglePrayer, 
+    user, 
+    signOut,
+    isSubscribed,
+  } = useUser();
   const [showPicker, setShowPicker] = useState<number | null>(null);
+  const router = useRouter();
 
   const textColor = { color: colors.text };
   const primaryColor = { color: colors.primary };
@@ -158,6 +169,65 @@ export default function Settings() {
             </View>
             <ChevronRight size={20} color="red" opacity={0.3} />
           </TouchableOpacity>
+        </View>
+
+        {/* Account Section */}
+        <View style={styles.sectionHeader}>
+          <View style={[styles.dot, { backgroundColor: colors.dot }]} />
+          <Text style={[styles.sectionTitle, { color: colors.primary, opacity: 0.8 }]}>Account & Sync</Text>
+        </View>
+
+        <View style={[styles.card, cardStyle]}>
+          {user ? (
+            <View style={{ width: '100%', gap: 16 }}>
+              <View style={styles.row}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                  <User size={24} color={colors.primary} />
+                  <View>
+                    <Text style={[styles.rowText, textColor]}>{user.email}</Text>
+                    <Text style={[
+                      { fontSize: 12, textTransform: 'uppercase', letterSpacing: 1 },
+                      isSubscribed
+                        ? { color: '#D4AF37', fontWeight: '700' }
+                        : { color: colors.primary, opacity: 0.6 }
+                    ]}>
+                      {isSubscribed ? '✦ Sakinah Premium' : 'Free Member'}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              <View style={[styles.divider, { backgroundColor: colors.cardBorder, width: '100%', height: 1 }]} />
+
+              <TouchableOpacity 
+                style={[styles.row, { paddingVertical: 8 }]}
+                onPress={async () => {
+                  await signOut();
+                  Alert.alert('Signed Out', 'You have been successfully signed out.');
+                }}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                  <LogOut size={20} color={colors.text} opacity={0.7} />
+                  <Text style={[styles.rowText, textColor, { opacity: 0.7 }]}>Sign Out</Text>
+                </View>
+                <ChevronRight size={20} color={colors.text} opacity={0.2} />
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity 
+              style={[styles.row, { paddingVertical: 8 }]}
+              onPress={() => router.push('/auth')}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <LogIn size={24} color={colors.primary} />
+                <View>
+                  <Text style={[styles.rowText, textColor]}>Sign In / Create Account</Text>
+                  <Text style={{ fontSize: 12, color: colors.text, opacity: 0.5 }}>Sync your journey and unlock more features</Text>
+                </View>
+              </View>
+              <ChevronRight size={20} color={colors.primary} opacity={0.5} />
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* About Section */}

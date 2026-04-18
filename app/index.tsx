@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, RefreshControl, Alert } from 'react-native';
 import { Bookmark, Image as ImageIcon } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { getDailyVerse, DAILY_VERSES, getRandomVerse } from '../utils/verses';
@@ -8,23 +8,41 @@ import { generateRandomVerse } from '../services/openai';
 import { useVerse } from '../context/VerseContext';
 import { toggleSaveVerse, isVerseSaved } from '../utils/storage';
 import { useLanguage } from '../context/LanguageContext';
+import { useUser } from '../context/UserContext';
 import { useTheme } from '../context/ThemeContext';
 import { IslamicPattern, Crescent } from '../components/IslamicElements';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import { BlurView } from 'expo-blur';
+import Paywall from '../components/Paywall';
 
 export default function Home() {
   const [saved, setSaved] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [showLimitOverlay, setShowLimitOverlay] = useState(false);
   const { currentVerse: dailyVerse, setCurrentVerse: setDailyVerse } = useVerse();
   const { language, t } = useLanguage();
+  const { dailyVerseCount, incrementDailyVerseCount, user, isSubscribed } = useUser();
   const { colors, isDark } = useTheme();
   const router = useRouter();
+  const [showPaywall, setShowPaywall] = useState(false);
 
   const onRefresh = useCallback(async () => {
+    // Anonymous limit: 5 free refreshes
+    if (!user && dailyVerseCount >= 5) {
+      setShowLimitOverlay(true);
+      return;
+    }
+    // Logged-in free limit: 10 refreshes/day
+    if (user && !isSubscribed && dailyVerseCount >= 10) {
+      setShowPaywall(true);
+      return;
+    }
+
     setRefreshing(true);
     try {
       const newVerse = await generateRandomVerse(language);
       setDailyVerse(newVerse);
+      incrementDailyVerseCount();
     } catch (error) {
       console.error(error);
       let fallbackVerse = getRandomVerse();
@@ -35,7 +53,7 @@ export default function Home() {
     } finally {
       setRefreshing(false);
     }
-  }, [dailyVerse, setDailyVerse]);
+  }, [dailyVerse, setDailyVerse, dailyVerseCount, user, language]);
 
   useEffect(() => {
     const checkSaved = async () => {
@@ -143,6 +161,32 @@ export default function Home() {
 
       </Animated.View>
     </ScrollView>
+
+      {showLimitOverlay && (
+        <View style={[StyleSheet.absoluteFill, { zIndex: 100, justifyContent: 'center', alignItems: 'center', padding: 24, backgroundColor: isDark ? 'rgba(15, 61, 46, 0.7)' : 'rgba(247, 245, 239, 0.7)' }]}>
+          <BlurView intensity={90} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
+          <View style={[styles.limitCard, { backgroundColor: colors.background, borderColor: colors.primary }]}>
+            <Text style={[styles.limitTitle, { color: colors.primary }]}>Daily Limit Reached</Text>
+            <Text style={[styles.limitDesc, { color: colors.text }]}>
+              Sign up to explore boundless daily verses, or wait until tomorrow for a refreshed connection.
+            </Text>
+            <View style={styles.limitActions}>
+              <TouchableOpacity style={styles.limitCancelBtn} onPress={() => setShowLimitOverlay(false)}>
+                <Text style={[styles.limitCancelText, { color: colors.text }]}>Explore App</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.limitAuthBtn, { backgroundColor: colors.primary }]} onPress={() => {
+                setShowLimitOverlay(false);
+                router.push({ pathname: '/auth', params: { mode: 'signup' } });
+              }}>
+                <Text style={[styles.limitAuthText, { color: colors.background }]}>Sign Up</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
+
+      <Paywall visible={showPaywall} onDismiss={() => setShowPaywall(false)} reason="verse" />
+
     </View>
   );
 }
@@ -252,5 +296,63 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
+  },
+  limitCard: {
+    width: '100%',
+    maxWidth: 340,
+    padding: 32,
+    borderRadius: 24,
+    borderWidth: 1,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  limitTitle: {
+    fontFamily: 'Georgia',
+    fontSize: 22,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  limitDesc: {
+    fontSize: 15,
+    lineHeight: 24,
+    textAlign: 'center',
+    opacity: 0.8,
+    marginBottom: 32,
+  },
+  limitActions: {
+    flexDirection: 'row',
+    width: '100%',
+    gap: 12,
+  },
+  limitCancelBtn: {
+    flex: 1,
+    paddingVertical: 16,
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  limitCancelText: {
+    fontSize: 14,
+    fontWeight: '600',
+    opacity: 0.7,
+  },
+  limitAuthBtn: {
+    flex: 1,
+    paddingVertical: 16,
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  limitAuthText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   },
 });
