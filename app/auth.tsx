@@ -96,8 +96,9 @@ export default function AuthScreen() {
     try {
       setLoading(true);
 
-      // Fixed HTTPS redirect that always works — bridge page sends user back via sakinah:// deep link
-      const redirectUrl = 'https://sakinah-be.onrender.com/auth/callback/';
+      // Build redirectTo with current app URL embedded so the bridge page knows where to send tokens back
+      const appUrl = AuthSession.makeRedirectUri({ scheme: 'sakinah' });
+      const redirectUrl = 'https://sakinah-be.onrender.com/auth/callback/?d=' + encodeURIComponent(appUrl);
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -110,9 +111,9 @@ export default function AuthScreen() {
       if (error) throw error;
       if (!data?.url) throw new Error('No OAuth URL returned from Supabase');
 
-      // Listen for the deep link that the bridge page sends back: sakinah://auth/callback#...
+      // Listen for the deep link the bridge page sends back — check for tokens not path (works for both sakinah:// and exp://)
       const subscription = Linking.addEventListener('url', async ({ url }) => {
-        if (!url.includes('auth/callback')) return; // ignore unrelated links
+        if (!url.includes('access_token') && !url.includes('code=')) return;
         subscription.remove();
         setLoading(true);
         try {
