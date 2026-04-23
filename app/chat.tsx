@@ -249,7 +249,7 @@ export default function Chat() {
             </Text>
             <Text style={[styles.emptyStateSubtitle, { color: colors.text }]}>
               {visuallyClear
-                ? 'Your previous reflections are safely stored. Start a new conversation below.'
+                ? 'Start a new conversation below.'
                 : 'Begin with a thought, or choose a prompt below.'}
             </Text>
             {!visuallyClear && (
