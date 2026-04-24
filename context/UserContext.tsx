@@ -58,80 +58,99 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
+    // Safety net: always mark loaded after 5 seconds no matter what
+    const safetyTimer = setTimeout(() => setIsLoaded(true), 5000);
+
     const loadData = async () => {
-      const onboarding = await AsyncStorage.getItem('sakinah_onboarding_complete');
-      const count = await AsyncStorage.getItem('sakinah_reflection_count');
-      const llmCount = await AsyncStorage.getItem('sakinah_llm_call_count');
-      const verseCount = await AsyncStorage.getItem('sakinah_daily_verse_count');
-      const sub = await AsyncStorage.getItem('sakinah_subscription');
-      const context = await AsyncStorage.getItem('sakinah_onboarding_context');
-      const freq = await AsyncStorage.getItem('sakinah_prayer_frequency');
-      const times = await AsyncStorage.getItem('sakinah_prayer_times');
-      const enabled = await AsyncStorage.getItem('sakinah_prayer_enabled');
-      const bookmarksData = await AsyncStorage.getItem('sakinah_bookmarks');
+      try {
+        const onboarding = await AsyncStorage.getItem('sakinah_onboarding_complete');
+        const count = await AsyncStorage.getItem('sakinah_reflection_count');
+        const llmCount = await AsyncStorage.getItem('sakinah_llm_call_count');
+        const verseCount = await AsyncStorage.getItem('sakinah_daily_verse_count');
+        const sub = await AsyncStorage.getItem('sakinah_subscription');
+        const context = await AsyncStorage.getItem('sakinah_onboarding_context');
+        const freq = await AsyncStorage.getItem('sakinah_prayer_frequency');
+        const times = await AsyncStorage.getItem('sakinah_prayer_times');
+        const enabled = await AsyncStorage.getItem('sakinah_prayer_enabled');
+        const bookmarksData = await AsyncStorage.getItem('sakinah_bookmarks');
 
-      const today = new Date().toDateString();
-      const lastUsageDate = await AsyncStorage.getItem('sakinah_last_usage_date');
+        const today = new Date().toDateString();
+        const lastUsageDate = await AsyncStorage.getItem('sakinah_last_usage_date');
 
-      if (onboarding === 'true') setHasCompletedOnboarding(true);
-      if (sub === 'true') setHasActiveSubscription(true);
-      if (context) setOnboardingContext(JSON.parse(context));
-      if (count) setReflectionCount(parseInt(count, 10));
+        if (onboarding === 'true') setHasCompletedOnboarding(true);
+        if (sub === 'true') setHasActiveSubscription(true);
+        if (context) setOnboardingContext(JSON.parse(context));
+        if (count) setReflectionCount(parseInt(count, 10));
 
-      // Check premium subscription (stored after payment)
-      const subExpiry = await AsyncStorage.getItem('sakinah_sub_expires_at');
-      if (subExpiry && parseInt(subExpiry, 10) > Date.now()) {
-        setIsSubscribed(true);
-      } else if (subExpiry) {
-        // Expired — clear it
-        await AsyncStorage.removeItem('sakinah_sub_expires_at');
-        await AsyncStorage.removeItem('sakinah_sub_plan');
-        setIsSubscribed(false);
+        // Check premium subscription (stored after payment)
+        const subExpiry = await AsyncStorage.getItem('sakinah_sub_expires_at');
+        if (subExpiry && parseInt(subExpiry, 10) > Date.now()) {
+          setIsSubscribed(true);
+        } else if (subExpiry) {
+          // Expired — clear it
+          await AsyncStorage.removeItem('sakinah_sub_expires_at');
+          await AsyncStorage.removeItem('sakinah_sub_plan');
+          setIsSubscribed(false);
+        }
+
+        if (lastUsageDate !== today) {
+          await AsyncStorage.setItem('sakinah_last_usage_date', today);
+          await AsyncStorage.setItem('sakinah_llm_call_count', '0');
+          await AsyncStorage.setItem('sakinah_daily_verse_count', '0');
+          setLlmCallCount(0);
+          setDailyVerseCount(0);
+        } else {
+          if (llmCount) setLlmCallCount(parseInt(llmCount, 10));
+          if (verseCount) setDailyVerseCount(parseInt(verseCount, 10));
+        }
+        if (context) setOnboardingContext(JSON.parse(context));
+
+        const loadedFreq = freq ? parseInt(freq, 10) : 5;
+        const loadedTimes = times ? JSON.parse(times) : ['05:30', '13:00', '16:30', '18:45', '20:15', '21:00', '22:00'];
+        const loadedEnabled = enabled !== 'false'; // default true
+
+        if (freq) setPrayerFrequency(loadedFreq);
+        if (times) setPrayerTimes(loadedTimes);
+        setPrayerEnabled(loadedEnabled);
+        if (bookmarksData) setBookmarks(JSON.parse(bookmarksData));
+
+        // Re-schedule notifications on app launch (OS may have cleared them)
+        if (loadedEnabled && onboarding === 'true') {
+          schedulePrayerNotifications(loadedTimes.slice(0, loadedFreq));
+        }
+
+        // Supabase session initialization — wrapped in try/catch so missing env vars don't hang the app
+        try {
+          const { data: { session: initialSession } } = await supabase.auth.getSession();
+          setSession(initialSession);
+          setUser(initialSession?.user ?? null);
+        } catch (authError) {
+          console.warn('Supabase auth init failed (check env vars):', authError);
+        }
+      } catch (e) {
+        console.warn('UserContext loadData error:', e);
+      } finally {
+        clearTimeout(safetyTimer);
+        setIsLoaded(true);
       }
-
-      if (lastUsageDate !== today) {
-        await AsyncStorage.setItem('sakinah_last_usage_date', today);
-        await AsyncStorage.setItem('sakinah_llm_call_count', '0');
-        await AsyncStorage.setItem('sakinah_daily_verse_count', '0');
-        setLlmCallCount(0);
-        setDailyVerseCount(0);
-      } else {
-        if (llmCount) setLlmCallCount(parseInt(llmCount, 10));
-        if (verseCount) setDailyVerseCount(parseInt(verseCount, 10));
-      }
-      if (context) setOnboardingContext(JSON.parse(context));
-
-      const loadedFreq = freq ? parseInt(freq, 10) : 5;
-      const loadedTimes = times ? JSON.parse(times) : ['05:30', '13:00', '16:30', '18:45', '20:15', '21:00', '22:00'];
-      const loadedEnabled = enabled !== 'false'; // default true
-
-      if (freq) setPrayerFrequency(loadedFreq);
-      if (times) setPrayerTimes(loadedTimes);
-      setPrayerEnabled(loadedEnabled);
-      if (bookmarksData) setBookmarks(JSON.parse(bookmarksData));
-      
-      // Re-schedule notifications on app launch (OS may have cleared them)
-      if (loadedEnabled && onboarding === 'true') {
-        schedulePrayerNotifications(loadedTimes.slice(0, loadedFreq));
-      }
-
-      // Supabase session initialization
-      const { data: { session: initialSession } } = await supabase.auth.getSession();
-      setSession(initialSession);
-      setUser(initialSession?.user ?? null);
-
-      setIsLoaded(true);
     };
     loadData();
 
     // Listen for auth changes
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-    });
+    let authListener: { subscription: { unsubscribe: () => void } } | null = null;
+    try {
+      const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+      });
+      authListener = data;
+    } catch (e) {
+      console.warn('Supabase onAuthStateChange failed:', e);
+    }
 
     return () => {
-      authListener.subscription.unsubscribe();
+      clearTimeout(safetyTimer);
+      authListener?.subscription.unsubscribe();
     };
   }, []);
 
