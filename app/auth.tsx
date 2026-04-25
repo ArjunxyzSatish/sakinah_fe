@@ -5,7 +5,7 @@ import * as WebBrowser from 'expo-web-browser';
 import * as AuthSession from 'expo-auth-session';
 import { supabase } from '../utils/supabase';
 
-WebBrowser.maybeCompleteAuthSession();
+try { WebBrowser.maybeCompleteAuthSession(); } catch (e) { console.warn('maybeCompleteAuthSession failed:', e); }
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
 import { IslamicPattern, Crescent } from '../components/IslamicElements';
