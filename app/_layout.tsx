@@ -1,4 +1,5 @@
 import { Slot, usePathname, useRouter, useRootNavigationState } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { View, StyleSheet, TouchableOpacity, Text, SafeAreaView } from 'react-native';
 import { Home, MessageCircle, Image as ImageIcon, Settings, Bookmark, Compass, BookOpen } from 'lucide-react-native';
 import { useMascot, MascotProvider } from '../context/MascotContext';
@@ -64,6 +65,7 @@ function AppLayout() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar style={isDark ? "light" : "dark"} backgroundColor={colors.background} />
       <View style={styles.content}>
         <Slot />
       </View>
