@@ -8,6 +8,10 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+    "androidStatusBar": {
+      "backgroundColor": "#0F3D2E",
+      "barStyle": "light-content"
+    },
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -25,11 +29,7 @@
       "permissions": [
         "android.permission.RECEIVE_BOOT_COMPLETED",
         "android.permission.SCHEDULE_EXACT_ALARM"
-      ],
-      "statusBar": {
-        "backgroundColor": "#0F3D2E",
-        "barStyle": "light-content"
-      }
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
