@@ -31,7 +31,27 @@ function AppLayout() {
     }
   }, [langLoaded, userLoaded, hasCompletedOnboarding, pathname, rootNavigationState?.key]);
 
+  // Safety: force-hide splash screen after 8s no matter what
+  // Prevents the app from being permanently stuck on a blank/splash screen
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      SplashScreen.hideAsync().catch(() => {});
+    }, 8000);
+    return () => clearTimeout(timer);
+  }, []);
+
   const isNavigationVisible = pathname !== '/onboarding' && pathname !== '/auth' && langLoaded && userLoaded;
+
+  // Show a branded loading screen while providers initialize
+  // This prevents the blank white screen when SplashScreen.preventAutoHideAsync fails
+  if (!langLoaded || !userLoaded) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#0F3D2E', justifyContent: 'center', alignItems: 'center' }}>
+        <Text style={{ color: '#D4AF37', fontSize: 32, fontWeight: 'bold', letterSpacing: 2 }}>Sakinah</Text>
+        <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, marginTop: 8 }}>Loading...</Text>
+      </SafeAreaView>
+    );
+  }
 
   const navItems = [
     { path: '/', icon: Home, label: t('nav.home') },

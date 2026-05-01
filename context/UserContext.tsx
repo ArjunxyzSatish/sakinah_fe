@@ -235,7 +235,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut();
   };
 
-  if (!isLoaded) return null;
+  // Don't block rendering — the splash screen covers the loading state
+  // and blocking here causes a blank screen on production APKs
 
   return (
     <UserContext.Provider

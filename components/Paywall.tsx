@@ -83,7 +83,7 @@ export default function Paywall({ visible, onDismiss, reason = 'reflection' }: P
   const [selectedPlan, setSelectedPlan] = useState<'weekly' | 'monthly'>('monthly');
   const [loading, setLoading] = useState(false);
 
-  const locale = Localization.getLocales()[0];
+  const locale = (() => { try { return Localization.getLocales()[0]; } catch { return { regionCode: undefined }; } })();
   const regionCode = locale?.regionCode;
   const pricing = getRegionalPricing(regionCode);
 

@@ -16,7 +16,7 @@ import { useAppAlert } from '../components/AppAlert';
 export default function AuthScreen() {
   const params = useLocalSearchParams();
   const [isLogin, setIsLogin] = useState(params.mode !== 'signup');
-  const generatedUri = AuthSession.makeRedirectUri({ scheme: 'sakinah' });
+  const generatedUri = (() => { try { return AuthSession.makeRedirectUri({ scheme: 'sakinah' }); } catch (e) { return 'sakinah://'; } })();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
