@@ -84,7 +84,16 @@ export default function Paywall({ visible, onDismiss, reason = 'reflection' }: P
   const [loading, setLoading] = useState(false);
 
   const locale = (() => { try { return Localization.getLocales()[0]; } catch { return { regionCode: undefined }; } })();
-  const regionCode = locale?.regionCode;
+  let regionCode = locale?.regionCode;
+
+  // Fallback: Emulators often default to US locale but sync the host timezone.
+  // try {
+  //   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  //   if (tz === 'Asia/Kolkata' || tz === 'Asia/Calcutta') {
+  //     regionCode = 'IN';
+  //   }
+  // } catch (e) {}
+
   const pricing = getRegionalPricing(regionCode);
 
   // Listen for deep link payment callback

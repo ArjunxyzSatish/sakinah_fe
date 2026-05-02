@@ -15,10 +15,10 @@ interface UserContextType {
   completeOnboarding: () => void;
   reflectionCount: number;
   incrementReflectionCount: () => void;
-  llmCallCount: number;
-  incrementLlmCallCount: () => void;
-  dailyVerseCount: number;
-  incrementDailyVerseCount: () => void;
+  llmCallsRemaining: number;
+  decrementLlmCallsRemaining: () => void;
+  versesRemaining: number;
+  decrementVersesRemaining: () => void;
   hasActiveSubscription: boolean;
   subscribe: () => void;
   isSubscribed: boolean;
@@ -44,8 +44,8 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
   const [reflectionCount, setReflectionCount] = useState(0);
-  const [llmCallCount, setLlmCallCount] = useState(0);
-  const [dailyVerseCount, setDailyVerseCount] = useState(0);
+  const [llmCallsRemaining, setLlmCallsRemaining] = useState(5);
+  const [versesRemaining, setVersesRemaining] = useState(10);
   const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [onboardingContext, setOnboardingContext] = useState<string[]>([]);
@@ -65,8 +65,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       try {
         const onboarding = await AsyncStorage.getItem('sakinah_onboarding_complete');
         const count = await AsyncStorage.getItem('sakinah_reflection_count');
-        const llmCount = await AsyncStorage.getItem('sakinah_llm_call_count');
-        const verseCount = await AsyncStorage.getItem('sakinah_daily_verse_count');
+        const llmRemaining = await AsyncStorage.getItem('sakinah_llm_calls_remaining');
+        const versesRemainingStr = await AsyncStorage.getItem('sakinah_verses_remaining');
         const sub = await AsyncStorage.getItem('sakinah_subscription');
         const context = await AsyncStorage.getItem('sakinah_onboarding_context');
         const freq = await AsyncStorage.getItem('sakinah_prayer_frequency');
@@ -95,13 +95,13 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
         if (lastUsageDate !== today) {
           await AsyncStorage.setItem('sakinah_last_usage_date', today);
-          await AsyncStorage.setItem('sakinah_llm_call_count', '0');
-          await AsyncStorage.setItem('sakinah_daily_verse_count', '0');
-          setLlmCallCount(0);
-          setDailyVerseCount(0);
+          await AsyncStorage.setItem('sakinah_llm_calls_remaining', '5');
+          await AsyncStorage.setItem('sakinah_verses_remaining', '10');
+          setLlmCallsRemaining(5);
+          setVersesRemaining(10);
         } else {
-          if (llmCount) setLlmCallCount(parseInt(llmCount, 10));
-          if (verseCount) setDailyVerseCount(parseInt(verseCount, 10));
+          if (llmRemaining) setLlmCallsRemaining(parseInt(llmRemaining, 10));
+          if (versesRemainingStr) setVersesRemaining(parseInt(versesRemainingStr, 10));
         }
         if (context) setOnboardingContext(JSON.parse(context));
 
@@ -124,6 +124,19 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
           const { data: { session: initialSession } } = await supabase.auth.getSession();
           setSession(initialSession);
           setUser(initialSession?.user ?? null);
+          
+          if (initialSession?.user) {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('free_verses_remaining, free_llm_calls_remaining')
+              .eq('id', initialSession.user.id)
+              .single();
+              
+            if (profile) {
+              setVersesRemaining(profile.free_verses_remaining);
+              setLlmCallsRemaining(profile.free_llm_calls_remaining);
+            }
+          }
         } catch (authError) {
           console.warn('Supabase auth init failed (check env vars):', authError);
         }
@@ -165,16 +178,16 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     await AsyncStorage.setItem('sakinah_reflection_count', newCount.toString());
   };
 
-  const incrementLlmCallCount = async () => {
-    const newCount = llmCallCount + 1;
-    setLlmCallCount(newCount);
-    await AsyncStorage.setItem('sakinah_llm_call_count', newCount.toString());
+  const decrementLlmCallsRemaining = async () => {
+    const newVal = Math.max(0, llmCallsRemaining - 1);
+    setLlmCallsRemaining(newVal);
+    await AsyncStorage.setItem('sakinah_llm_calls_remaining', newVal.toString());
   };
 
-  const incrementDailyVerseCount = async () => {
-    const newCount = dailyVerseCount + 1;
-    setDailyVerseCount(newCount);
-    await AsyncStorage.setItem('sakinah_daily_verse_count', newCount.toString());
+  const decrementVersesRemaining = async () => {
+    const newVal = Math.max(0, versesRemaining - 1);
+    setVersesRemaining(newVal);
+    await AsyncStorage.setItem('sakinah_verses_remaining', newVal.toString());
   };
 
   const subscribe = async () => {
@@ -245,10 +258,10 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         completeOnboarding,
         reflectionCount,
         incrementReflectionCount,
-        llmCallCount,
-        incrementLlmCallCount,
-        dailyVerseCount,
-        incrementDailyVerseCount,
+        llmCallsRemaining,
+        decrementLlmCallsRemaining,
+        versesRemaining,
+        decrementVersesRemaining,
         hasActiveSubscription,
         subscribe,
         isSubscribed,
