@@ -14,6 +14,7 @@ import { IslamicPattern, Crescent } from '../components/IslamicElements';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 import Paywall from '../components/Paywall';
+import { useAppAlert } from '../components/AppAlert';
 
 export default function Home() {
   const [saved, setSaved] = useState(false);
@@ -21,30 +22,39 @@ export default function Home() {
   const [showLimitOverlay, setShowLimitOverlay] = useState(false);
   const { currentVerse: dailyVerse, setCurrentVerse: setDailyVerse } = useVerse();
   const { language, t } = useLanguage();
-  const { dailyVerseCount, incrementDailyVerseCount, user, isSubscribed } = useUser();
+  const { versesRemaining, decrementVersesRemaining, user, isSubscribed, session } = useUser();
   const { colors, isDark } = useTheme();
   const router = useRouter();
   const [showPaywall, setShowPaywall] = useState(false);
+  const { showAlert, alertElement } = useAppAlert();
 
   const onRefresh = useCallback(async () => {
-    // Anonymous limit: 5 free refreshes
-    if (!user && dailyVerseCount >= 5) {
+    // Limits
+    if (!user && versesRemaining <= 0) {
       setShowLimitOverlay(true);
       return;
     }
-    // Logged-in free limit: 10 refreshes/day
-    if (user && !isSubscribed && dailyVerseCount >= 10) {
+    if (user && !isSubscribed && versesRemaining <= 0) {
       setShowPaywall(true);
       return;
     }
 
     setRefreshing(true);
     try {
-      const newVerse = await generateRandomVerse(language);
+      const newVerse = await generateRandomVerse(language, session?.access_token || null);
       setDailyVerse(newVerse);
-      incrementDailyVerseCount();
-    } catch (error) {
-      console.error(error);
+      decrementVersesRemaining();
+    } catch (error: any) {
+      if (error?.message?.includes('403')) {
+         if (user) setShowPaywall(true);
+         else setShowLimitOverlay(true);
+         return;
+      }
+      console.warn("Could not fetch new verse, using fallback.", error);
+      showAlert(
+        "Connection Issue",
+        "We couldn't fetch a new verse from the AI right now. Please try again later. Enjoy this beautiful classic verse instead while we sort it out!"
+      );
       let fallbackVerse = getRandomVerse();
       while (fallbackVerse.reference === dailyVerse.reference && DAILY_VERSES.length > 1) {
         fallbackVerse = getRandomVerse();
@@ -53,7 +63,7 @@ export default function Home() {
     } finally {
       setRefreshing(false);
     }
-  }, [dailyVerse, setDailyVerse, dailyVerseCount, user, language]);
+  }, [dailyVerse, setDailyVerse, versesRemaining, user, language, isSubscribed, session]);
 
   useEffect(() => {
     const checkSaved = async () => {
@@ -74,93 +84,93 @@ export default function Home() {
       <ScrollView
         contentContainerStyle={styles.container}
         showsVerticalScrollIndicator={false}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-          tintColor={colors.primary}
-          colors={[colors.primary]}
-        />
-      }
-    >
-      <Animated.View entering={FadeInDown.duration(800)} style={styles.content}>
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
+          />
+        }
+      >
+        <Animated.View entering={FadeInDown.duration(800)} style={styles.content}>
 
-        <View style={[styles.labelContainer, { backgroundColor: colors.card, borderColor: colors.border, flexDirection: 'row', alignItems: 'center', gap: 8 }]}>
-          {t('home.verseOfDay').split(' ').map((word, index, array) => (
-            <React.Fragment key={index}>
-              <Text style={[styles.labelText, { color: colors.primary }]}>{word}</Text>
-              {index < array.length - 1 && (
-                <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: colors.accent }} />
-              )}
-            </React.Fragment>
-          ))}
-        </View>
-
-        <View style={styles.verseContainer}>
-          <Text style={[styles.arabic, { writingDirection: 'rtl', color: colors.primary }]}>
-            {dailyVerse.arabic}
-          </Text>
-          <Text style={[styles.reference, { color: colors.accent }]}>
-            {dailyVerse.reference}
-          </Text>
-          <Text style={[styles.translation, { color: colors.text }]}>
-            "{dailyVerse.translation}"
-          </Text>
-
-          <View style={styles.divider}>
-            <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
-            <Crescent size={18} color="#D4AF37" />
-            <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+          <View style={[styles.labelContainer, { backgroundColor: colors.card, borderColor: colors.border, flexDirection: 'row', alignItems: 'center', gap: 8 }]}>
+            {t('home.verseOfDay').split(' ').map((word, index, array) => (
+              <React.Fragment key={index}>
+                <Text style={[styles.labelText, { color: colors.primary }]}>{word}</Text>
+                {index < array.length - 1 && (
+                  <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: colors.accent }} />
+                )}
+              </React.Fragment>
+            ))}
           </View>
 
-          <Text style={[
-            styles.reflection,
-            RTL_LANGUAGES.includes(language) && styles.reflectionAr,
-            { writingDirection: RTL_LANGUAGES.includes(language) ? 'rtl' : 'ltr', color: colors.text }
-          ]}>
-            {language === 'ar' ? dailyVerse.reflectionAr : dailyVerse.reflection}
-          </Text>
-        </View>
+          <View style={styles.verseContainer}>
+            <Text style={[styles.arabic, { writingDirection: 'rtl', color: colors.primary }]}>
+              {dailyVerse.arabic}
+            </Text>
+            <Text style={[styles.reference, { color: colors.accent }]}>
+              {dailyVerse.reference}
+            </Text>
+            <Text style={[styles.translation, { color: colors.text }]}>
+              "{dailyVerse.translation}"
+            </Text>
 
-        <View style={styles.actionsContainer}>
-          <TouchableOpacity
-            style={[styles.reflectBtn, { backgroundColor: colors.primary, shadowColor: colors.primary }]}
-            onPress={() => router.push({
-              pathname: '/chat',
-              params: { initialMessage: `I want to reflect on today's verse: "${dailyVerse.translation}" (${dailyVerse.reference})` }
-            })}
-          >
-            <Text style={[styles.reflectBtnText, { color: colors.background }]}>{t('home.reflect')}</Text>
-          </TouchableOpacity>
+            <View style={styles.divider}>
+              <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+              <Crescent size={18} color="#D4AF37" />
+              <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+            </View>
 
-          <View style={{ flexDirection: 'row', gap: 12 }}>
-            <TouchableOpacity 
-              style={[styles.saveBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
-              onPress={() => router.push('/wallpaper')}
-            >
-              <ImageIcon 
-                size={24} 
-                color={colors.primary} 
-                strokeWidth={2} 
-              />
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={[styles.saveBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
-              onPress={handleSave}
-            >
-              <Bookmark 
-                size={24} 
-                color={colors.primary} 
-                fill={saved ? colors.primary : (isDark ? 'rgba(247, 245, 239, 0)' : 'rgba(26, 26, 26, 0)')} 
-                strokeWidth={saved ? 2.5 : 2} 
-              />
-            </TouchableOpacity>
+            <Text style={[
+              styles.reflection,
+              RTL_LANGUAGES.includes(language) && styles.reflectionAr,
+              { writingDirection: RTL_LANGUAGES.includes(language) ? 'rtl' : 'ltr', color: colors.text }
+            ]}>
+              {language === 'ar' ? dailyVerse.reflectionAr : dailyVerse.reflection}
+            </Text>
           </View>
-        </View>
 
-      </Animated.View>
-    </ScrollView>
+          <View style={styles.actionsContainer}>
+            <TouchableOpacity
+              style={[styles.reflectBtn, { backgroundColor: colors.primary, shadowColor: colors.primary }]}
+              onPress={() => router.push({
+                pathname: '/chat',
+                params: { initialMessage: `I want to reflect on today's verse: "${dailyVerse.translation}" (${dailyVerse.reference})` }
+              })}
+            >
+              <Text style={[styles.reflectBtnText, { color: colors.background }]}>{t('home.reflect')}</Text>
+            </TouchableOpacity>
+
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              <TouchableOpacity
+                style={[styles.saveBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
+                onPress={() => router.push('/wallpaper')}
+              >
+                <ImageIcon
+                  size={24}
+                  color={colors.primary}
+                  strokeWidth={2}
+                />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.saveBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
+                onPress={handleSave}
+              >
+                <Bookmark
+                  size={24}
+                  color={colors.primary}
+                  fill={saved ? colors.primary : (isDark ? 'rgba(247, 245, 239, 0)' : 'rgba(26, 26, 26, 0)')}
+                  strokeWidth={saved ? 2.5 : 2}
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+        </Animated.View>
+      </ScrollView>
 
       {showLimitOverlay && (
         <View style={[StyleSheet.absoluteFill, { zIndex: 100, justifyContent: 'center', alignItems: 'center', padding: 24, backgroundColor: isDark ? 'rgba(15, 61, 46, 0.7)' : 'rgba(247, 245, 239, 0.7)' }]}>
@@ -186,7 +196,7 @@ export default function Home() {
       )}
 
       <Paywall visible={showPaywall} onDismiss={() => setShowPaywall(false)} reason="verse" />
-
+      {alertElement}
     </View>
   );
 }

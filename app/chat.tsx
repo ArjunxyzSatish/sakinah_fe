@@ -40,8 +40,8 @@ export default function Chat() {
   const {
     reflectionCount,
     incrementReflectionCount,
-    llmCallCount,
-    incrementLlmCallCount,
+    llmCallsRemaining,
+    decrementLlmCallsRemaining,
     user,
     session,
     isSubscribed,
@@ -87,12 +87,12 @@ export default function Chat() {
     if (!messageText.trim()) return;
 
     // Anonymous limit
-    if (!user && llmCallCount >= 3) {
+    if (!user && llmCallsRemaining <= 0) {
       setShowLimitOverlay(true);
       return;
     }
-    // Logged-in free limit: 5 reflections/day
-    if (user && !isSubscribed && llmCallCount >= 5) {
+    // Logged-in free limit
+    if (user && !isSubscribed && llmCallsRemaining <= 0) {
       setShowPaywall(true);
       return;
     }
@@ -103,7 +103,7 @@ export default function Chat() {
     setIsLoading(true);
 
     try {
-      const generator = streamReflection(messageText, language);
+      const generator = streamReflection(messageText, language, session?.access_token || null);
       let fullResponse = '';
 
       setMessages(prev => [...prev, { role: 'assistant', content: '', parsed: parseStreamedContent('') }]);
@@ -124,7 +124,7 @@ export default function Chat() {
       }
 
       incrementReflectionCount();
-      incrementLlmCallCount();
+      decrementLlmCallsRemaining();
 
       // Sync to backend if logged in
       if (user && session?.access_token) {
@@ -132,16 +132,22 @@ export default function Chat() {
           console.error('Failed to sync chat to backend:', e);
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      setMessages(prev => [
-        ...prev,
-        {
-          role: 'assistant',
-          content: 'Error connecting to network',
-          parsed: parseStreamedContent(t('chat.error'))
-        }
-      ]);
+      if (error?.message?.includes('limit_reached') || error?.message?.includes('403')) {
+        if (user) setShowPaywall(true);
+        else setShowLimitOverlay(true);
+        setMessages(prev => prev.slice(0, -1)); // Remove the empty message
+      } else {
+        setMessages(prev => [
+          ...prev.slice(0, -1),
+          {
+            role: 'assistant',
+            content: 'Error connecting to network',
+            parsed: parseStreamedContent(t('chat.error'))
+          }
+        ]);
+      }
     } finally {
       setIsLoading(false);
     }
