@@ -61,6 +61,13 @@ function getRegionalPricing(regionCode: string | null | undefined): RegionalPric
         razorpayWeeklyAmount: 149, razorpayMonthlyAmount: 399,
         razorpayCurrency: 'USD',
       };
+    case 'GB':
+      return {
+        weeklyDisplay: '£2.49', monthlyDisplay: '£6.49',
+        weeklySaving: 'Save 35%', currency: 'GBP',
+        razorpayWeeklyAmount: 249, razorpayMonthlyAmount: 649,
+        razorpayCurrency: 'GBP',
+      };
     default:
       return {
         weeklyDisplay: '$2.99', monthlyDisplay: '$7.99',
@@ -83,16 +90,44 @@ export default function Paywall({ visible, onDismiss, reason = 'reflection' }: P
   const [selectedPlan, setSelectedPlan] = useState<'weekly' | 'monthly'>('monthly');
   const [loading, setLoading] = useState(false);
 
-  const locale = (() => { try { return Localization.getLocales()[0]; } catch { return { regionCode: undefined }; } })();
-  let regionCode = locale?.regionCode;
+  const [regionCode, setRegionCode] = useState<string | undefined>(() => {
+    try {
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      
+      // Map common timezones to their respective region codes
+      const tzMap: Record<string, string> = {
+        'Asia/Kolkata': 'IN', 'Asia/Calcutta': 'IN',
+        'Asia/Dubai': 'AE', 'Asia/Riyadh': 'SA', 'Asia/Qatar': 'QA', 
+        'Asia/Kuwait': 'KW', 'Asia/Bahrain': 'BH', 'Asia/Muscat': 'OM', 'Asia/Amman': 'JO',
+        'Asia/Karachi': 'PK', 'Asia/Dhaka': 'BD', 'Asia/Colombo': 'LK',
+        'Asia/Kuala_Lumpur': 'MY', 'Asia/Jakarta': 'ID',
+        'Europe/Istanbul': 'TR', 'Asia/Istanbul': 'TR',
+        'Europe/London': 'GB',
+        'America/New_York': 'US', 'America/Chicago': 'US', 
+        'America/Denver': 'US', 'America/Los_Angeles': 'US'
+      };
+      
+      if (tzMap[tz]) return tzMap[tz];
+      
+      return Localization.getLocales()[0]?.regionCode || undefined;
+    } catch {
+      return undefined;
+    }
+  });
 
-  // Fallback: Emulators often default to US locale but sync the host timezone.
-  // try {
-  //   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  //   if (tz === 'Asia/Kolkata' || tz === 'Asia/Calcutta') {
-  //     regionCode = 'IN';
-  //   }
-  // } catch (e) {}
+  useEffect(() => {
+    // Bulletproof region detection via IP, overrides the phone's language setting
+    fetch('https://api.country.is')
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.country) {
+          setRegionCode(data.country.toUpperCase());
+        }
+      })
+      .catch(() => {
+        // If offline or failed, stick to initial timezone/locale setting
+      });
+  }, []);
 
   const pricing = getRegionalPricing(regionCode);
 
