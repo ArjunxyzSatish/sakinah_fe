@@ -2,7 +2,7 @@ import { Language } from '../context/LanguageContext';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL;
 
-export async function* streamReflection(message: string, language: Language = 'en') {
+export async function* streamReflection(message: string, language: Language = 'en', token: string | null = null) {
   const chunks: string[] = [];
   let done = false;
   let error: Error | null = null;
@@ -12,6 +12,9 @@ export async function* streamReflection(message: string, language: Language = 'e
   const xhr = new XMLHttpRequest();
   xhr.open('POST', `${API_BASE_URL}/reflect/stream/`);
   xhr.setRequestHeader('Content-Type', 'application/json');
+  if (token) {
+    xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+  }
 
   xhr.onreadystatechange = () => {
     if (xhr.readyState >= 3 && xhr.responseText) {
@@ -27,6 +30,12 @@ export async function* streamReflection(message: string, language: Language = 'e
           if (jsonStr === '[DONE]') continue;
           try {
             const parsed = JSON.parse(jsonStr);
+            if (parsed.error) {
+              error = new Error(parsed.error);
+              done = true;
+              if (resolveWait) resolveWait();
+              break;
+            }
             const delta = parsed.choices?.[0]?.delta?.content;
             if (delta) {
               chunks.push(delta);
@@ -96,9 +105,11 @@ export async function* streamReflection(message: string, language: Language = 'e
   }
 }
 
-export async function generateRandomVerse(language: Language = 'en') {
+export async function generateRandomVerse(language: Language = 'en', token: string | null = null) {
   try {
-    const response = await fetch(`${API_BASE_URL}/verse/random/?language=${language}`);
+    const response = await fetch(`${API_BASE_URL}/verse/random/?language=${language}`, {
+      headers: token ? { 'Authorization': `Bearer ${token}` } : undefined
+    });
     if (!response.ok) {
       throw new Error(`API error: ${response.status}`);
     }
