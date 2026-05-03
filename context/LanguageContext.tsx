@@ -69,7 +69,7 @@ const translations: Record<Language, Record<string, string>> = {
     'nav.settings': 'Settings',
     'home.verseOfDay': 'Verse of the Day',
     'home.reflect': 'Reflect',
-    'nav.prayer': 'Qibla',
+    'nav.prayer': 'Prayer',
     'chat.title': 'Reflection',
     'chat.empty': 'Share what is on your mind.\nLet us reflect together.',
     'chat.placeholder': 'Share your thoughts...',
