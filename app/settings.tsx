@@ -1,5 +1,4 @@
 import { View, Text, StyleSheet, ScrollView, Switch, TouchableOpacity, TextInput, Platform, KeyboardAvoidingView } from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -14,16 +13,12 @@ export default function Settings() {
   const { isDark, toggleTheme, colors } = useTheme();
   const { t } = useLanguage();
   const { 
-    prayerFrequency, 
-    prayerTimes, 
-    updatePrayerSettings, 
     prayerEnabled, 
     togglePrayer, 
     user, 
     signOut,
     isSubscribed,
   } = useUser();
-  const [showPicker, setShowPicker] = useState<number | null>(null);
   const router = useRouter();
   const { showAlert, alertElement } = useAppAlert();
 
@@ -31,27 +26,10 @@ export default function Settings() {
   const primaryColor = { color: colors.primary };
   const cardStyle = { backgroundColor: colors.card, borderColor: colors.cardBorder };
 
-  const handleFrequencyChange = (newFreq: number) => {
-    updatePrayerSettings(newFreq, prayerTimes);
-  };
-
-  const onTimeChange = (event: any, selectedDate?: Date) => {
-    setShowPicker(null);
-    if (selectedDate && showPicker !== null) {
-      const h = selectedDate.getHours().toString().padStart(2, '0');
-      const m = selectedDate.getMinutes().toString().padStart(2, '0');
-      const newTimes = [...prayerTimes];
-      newTimes[showPicker] = `${h}:${m}`;
-      updatePrayerSettings(prayerFrequency, newTimes);
-    }
-  };
-
-  const getPickerDate = (index: number) => {
-    const [h, m] = (prayerTimes[index] || '12:00').split(':').map(Number);
-    const d = new Date();
-    d.setHours(h);
-    d.setMinutes(m);
-    return d;
+  const handlePrayerToggle = (val: boolean) => {
+    // We pass 0, 0 for lat/lon here, but ideally notifications are scheduled in the prayer screen
+    // when location is known. The toggle will at least save the preference.
+    togglePrayer(val, 0, 0);
   };
 
   return (
@@ -92,58 +70,14 @@ export default function Settings() {
             <Text style={[styles.rowText, textColor]}>Prayer Reminders</Text>
             <Switch 
               value={prayerEnabled} 
-              onValueChange={togglePrayer} 
+              onValueChange={handlePrayerToggle} 
               trackColor={{ true: colors.primary, false: 'rgba(15, 61, 46, 0.2)' }}
               thumbColor={prayerEnabled ? colors.background : '#f4f3f4'}
             />
           </View>
-
-          {prayerEnabled && (
-            <>
-              <View style={[styles.divider, { backgroundColor: colors.cardBorder, width: '100%' }]} />
-              
-              <View style={styles.row}>
-                <Text style={[styles.rowText, textColor]}>{t('prayer.times.count')}</Text>
-                <View style={styles.stepper}>
-                  <TouchableOpacity onPress={() => handleFrequencyChange(Math.max(1, prayerFrequency - 1))} style={styles.stepBtn}>
-                    <Text style={[styles.stepBtnText, primaryColor]}>-</Text>
-                  </TouchableOpacity>
-                  <Text style={[styles.freqValue, primaryColor]}>{prayerFrequency}</Text>
-                  <TouchableOpacity onPress={() => handleFrequencyChange(Math.min(7, prayerFrequency + 1))} style={styles.stepBtn}>
-                    <Text style={[styles.stepBtnText, primaryColor]}>+</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-              
-              <View style={[styles.divider, { backgroundColor: colors.cardBorder, width: '100%' }]} />
-              
-              <View style={styles.timesContainer}>
-                {prayerTimes.slice(0, prayerFrequency).map((time: string, i: number) => (
-                  <View key={i} style={styles.timeRow}>
-                    <TouchableOpacity style={styles.timeHeaderRow} onPress={() => setShowPicker(i)}>
-                      <View style={styles.timeLabelGroup}>
-                        <Clock size={16} color={colors.primary} opacity={0.6} />
-                        <Text style={[styles.timeRowLabel, textColor]}>Prayer {i + 1}</Text>
-                      </View>
-                      <View style={[styles.timeDisplayBox, { borderColor: colors.border }]}>
-                        <Text style={[styles.timeValueText, primaryColor]}>{time}</Text>
-                      </View>
-                    </TouchableOpacity>
-                  </View>
-                ))}
-              </View>
-
-              {showPicker !== null && (
-                <DateTimePicker
-                  value={getPickerDate(showPicker)}
-                  mode="time"
-                  is24Hour={true}
-                  display={Platform.OS === 'android' ? 'spinner' : 'default'}
-                  onChange={onTimeChange}
-                />
-              )}
-            </>
-          )}
+          <Text style={{fontSize: 12, opacity: 0.6, marginTop: 12, color: colors.text}}>
+            Prayer times are automatically calculated based on your location and the Muslim World League standard.
+          </Text>
         </View>
 
         {/* Data Management Section */}

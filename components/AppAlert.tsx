@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Modal, Platform } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useTheme } from '../context/ThemeContext';
 
@@ -36,11 +36,15 @@ export default function AppAlert({
   return (
     <Modal transparent animationType="fade" visible={visible} onRequestClose={onDismiss}>
       <View style={styles.overlay}>
-        <BlurView
-          intensity={90}
-          tint={isDark ? 'dark' : 'light'}
-          style={StyleSheet.absoluteFill}
-        />
+        {Platform.OS === 'ios' ? (
+          <BlurView
+            intensity={90}
+            tint={isDark ? 'dark' : 'light'}
+            style={StyleSheet.absoluteFill}
+          />
+        ) : (
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: isDark ? 'rgba(0,0,0,0.8)' : 'rgba(0,0,0,0.6)' }]} />
+        )}
         <View style={[styles.card, { backgroundColor: colors.background, borderColor: colors.primary }]}>
         <Text style={[styles.title, { color: colors.primary }]}>{title}</Text>
           {message ? (
