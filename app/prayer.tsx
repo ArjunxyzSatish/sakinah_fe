@@ -16,6 +16,14 @@ import { getTodayPrayerTimes, getFallbackCoordinates, PrayerData } from '../util
 
 const { width } = Dimensions.get('window');
 
+const PRAYER_ARABIC: Record<string, string> = {
+  Fajr:    'الفجر',
+  Dhuhr:   'الظهر',
+  Asr:     'العصر',
+  Maghrib: 'المغرب',
+  Isha:    'العشاء',
+};
+
 export default function PrayerScreen() {
   const { colors, isDark } = useTheme();
   const { t, language } = useLanguage();
@@ -378,12 +386,17 @@ export default function PrayerScreen() {
                       <Text style={[styles.timeLabel, { color: isNext ? colors.primary : colors.text, fontSize: 24, fontWeight: '900' }]}>
                         {prayer.name}
                       </Text>
-                      <Text style={[styles.timeValue, { color: isNext ? colors.primary : colors.text, opacity: isNext ? 1 : 0.7, fontSize: 20, fontWeight: '700', marginTop: 2 }]}>
-                        {prayer.timeStr}
+                      <Text style={{ color: isNext ? colors.primary : colors.text, opacity: isNext ? 0.55 : 0.35, fontSize: 13, fontFamily: 'serif', marginTop: 1 }}>
+                        {PRAYER_ARABIC[prayer.name]}
                       </Text>
-                      <Text style={[styles.timeWindow, { color: colors.text }]}>
-                        Prayer time · {prayer.timeStr} – {prayer.endTimeStr}
-                      </Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'flex-end', marginTop: 6, gap: 3 }}>
+                        <Text style={[styles.timeValue, { color: isNext ? colors.primary : colors.text, opacity: isNext ? 1 : 0.7, fontSize: 20, fontWeight: '700' }]}>
+                          {prayer.timeStr.replace(/\s?(AM|PM)$/i, '')}
+                        </Text>
+                        <Text style={{ color: isNext ? colors.primary : colors.text, opacity: isNext ? 0.7 : 0.45, fontSize: 11, fontWeight: '700', letterSpacing: 0.5, paddingBottom: 2 }}>
+                          {(prayer.timeStr.match(/AM|PM/i) || [])[0]}
+                        </Text>
+                      </View>
                     </View>
                     
                     <View style={styles.checkboxBtn}>
