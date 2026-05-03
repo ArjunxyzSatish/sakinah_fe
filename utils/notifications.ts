@@ -55,7 +55,10 @@ export async function cancelAllNotifications() {
   console.log('Cancelled all scheduled notifications.');
 }
 
-export async function schedulePrayerNotifications(times: string[]) {
+import { getTodayPrayerTimes } from './adhanHelper';
+import { Coordinates, CalculationMethod, PrayerTimes } from 'adhan';
+
+export async function schedulePrayerNotifications(lat: number, lon: number) {
   if (Platform.OS === 'web') return;
 
   // Ensure permissions are granted before scheduling
@@ -71,27 +74,44 @@ export async function schedulePrayerNotifications(times: string[]) {
   // Clear ALL existing scheduled notifications first
   await Notifications.cancelAllScheduledNotificationsAsync();
 
-  for (const time of times) {
-    const [hours, minutes] = time.split(':').map(Number);
-    if (isNaN(hours) || isNaN(minutes)) continue;
+  let count = 0;
 
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: "Sakinah - Prayer Time",
-        body: "It is time for prayer. Take a moment to reflect and find peace.",
-        sound: true,
-        priority: Notifications.AndroidNotificationPriority.MAX,
-      },
-      trigger: {
-        type: Notifications.SchedulableTriggerInputTypes.DAILY,
-        hour: hours,
-        minute: minutes,
-        channelId: 'prayer-reminders',
-      },
-    });
+  // Schedule for the next 7 days to ensure they ring even if app isn't opened tomorrow
+  for (let i = 0; i < 7; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() + i);
+    
+    const coords = new Coordinates(lat, lon);
+    const params = CalculationMethod.MuslimWorldLeague();
+    const prayerTimes = new PrayerTimes(coords, d, params);
+
+    const prayers = [
+      { name: 'Fajr', time: prayerTimes.fajr },
+      { name: 'Dhuhr', time: prayerTimes.dhuhr },
+      { name: 'Asr', time: prayerTimes.asr },
+      { name: 'Maghrib', time: prayerTimes.maghrib },
+      { name: 'Isha', time: prayerTimes.isha },
+    ];
+
+    for (const prayer of prayers) {
+      if (prayer.time.getTime() > Date.now()) {
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title: `Time for ${prayer.name}`,
+            body: `It's ${prayer.name} time. Take a moment to connect and find peace.`,
+            sound: true,
+            priority: Notifications.AndroidNotificationPriority.MAX,
+          },
+          trigger: {
+            type: Notifications.SchedulableTriggerInputTypes.DATE,
+            date: prayer.time,
+            channelId: 'prayer-reminders',
+          },
+        });
+        count++;
+      }
+    }
   }
 
-  // Verify scheduled notifications
-  const scheduled = await Notifications.getAllScheduledNotificationsAsync();
-  console.log(`Scheduled ${times.length} daily prayer notifications. Verified: ${scheduled.length} active.`);
+  console.log(`Scheduled ${count} adhan notifications for the next 7 days.`);
 }

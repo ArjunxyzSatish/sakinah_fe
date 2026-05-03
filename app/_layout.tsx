@@ -2,7 +2,8 @@ import { Slot, usePathname, useRouter, useRootNavigationState } from 'expo-route
 import { StatusBar } from 'expo-status-bar';
 import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Home, MessageCircle, Image as ImageIcon, Settings, Bookmark, Compass, BookOpen } from 'lucide-react-native';
+import { Home, MessageCircle, Image as ImageIcon, Settings, Bookmark, BookOpen } from 'lucide-react-native';
+import { Mosque } from '../components/IslamicElements';
 import { useMascot, MascotProvider } from '../context/MascotContext';
 import { LanguageProvider, useLanguage } from '../context/LanguageContext';
 import { UserProvider, useUser } from '../context/UserContext';
@@ -56,12 +57,12 @@ function AppLayout() {
   }
 
   const navItems = [
-    { path: '/', icon: Home, label: t('nav.home') },
-    { path: '/chat', icon: MessageCircle, label: t('nav.reflect') },
-    { path: '/prayer', icon: Compass, label: t('nav.prayer') },
-    { path: '/quran', icon: BookOpen, label: t('nav.quran') },
-    { path: '/saved', icon: Bookmark, label: t('nav.saved') },
-    { path: '/settings', icon: Settings, label: t('nav.settings') },
+    { path: '/', icon: Home, label: t('nav.home'), custom: null },
+    { path: '/chat', icon: MessageCircle, label: t('nav.reflect'), custom: null },
+    { path: '/prayer', icon: null, label: t('nav.prayer'), custom: 'mosque' },
+    { path: '/quran', icon: BookOpen, label: t('nav.quran'), custom: null },
+    { path: '/saved', icon: Bookmark, label: t('nav.saved'), custom: null },
+    { path: '/settings', icon: Settings, label: t('nav.settings'), custom: null },
   ];
 
   return (
@@ -83,13 +84,20 @@ function AppLayout() {
                   style={styles.navItem}
                   onPress={() => router.push(item.path as any)}
                 >
-                  <Icon 
-                    strokeWidth={isActive ? 2.5 : 1.5} 
-                    size={24} 
-                    color={isActive ? colors.primary : (isDark ? 'rgba(247, 245, 239, 0.4)' : 'rgba(26, 26, 26, 0.4)')} 
-                  />
+                  {item.custom === 'mosque' ? (
+                    <Mosque
+                      size={24}
+                      color={isActive ? colors.primary : (isDark ? 'rgba(247, 245, 239, 0.4)' : 'rgba(26, 26, 26, 0.4)')}
+                    />
+                  ) : (
+                    <Icon
+                      strokeWidth={isActive ? 2.5 : 1.5}
+                      size={24}
+                      color={isActive ? colors.primary : (isDark ? 'rgba(247, 245, 239, 0.4)' : 'rgba(26, 26, 26, 0.4)')}
+                    />
+                  )}
                   <Text style={[
-                    styles.navLabel, 
+                    styles.navLabel,
                     { color: isActive ? colors.primary : (isDark ? 'rgba(247, 245, 239, 0.4)' : 'rgba(26, 26, 26, 0.4)') }
                   ]}>
                     {item.label}

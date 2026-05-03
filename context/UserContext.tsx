@@ -25,9 +25,10 @@ interface UserContextType {
   markSubscribed: (plan: 'weekly' | 'monthly', expiresAt: number) => Promise<void>;
   onboardingContext: string[];
   setOnboardingContext: (context: string[]) => void;
-  prayerFrequency: number;
-  prayerTimes: string[];
-  updatePrayerSettings: (frequency: number, times: string[]) => void;
+  prayerEnabled: boolean;
+  togglePrayer: (enabled: boolean, lat: number, lon: number) => void;
+  completedPrayers: Record<string, boolean>;
+  togglePrayerCompleted: (prayerKey: string) => void;
   prayerEnabled: boolean;
   togglePrayer: (enabled: boolean) => void;
   bookmarks: QuranBookmark[];
@@ -49,9 +50,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [onboardingContext, setOnboardingContext] = useState<string[]>([]);
-  const [prayerFrequency, setPrayerFrequency] = useState(5);
-  const [prayerTimes, setPrayerTimes] = useState<string[]>(['05:30', '13:00', '16:30', '18:45', '20:15', '21:00', '22:00']);
   const [prayerEnabled, setPrayerEnabled] = useState(true);
+  const [completedPrayers, setCompletedPrayers] = useState<Record<string, boolean>>({});
   const [bookmarks, setBookmarks] = useState<QuranBookmark[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
@@ -69,9 +69,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         const versesRemainingStr = await AsyncStorage.getItem('sakinah_verses_remaining');
         const sub = await AsyncStorage.getItem('sakinah_subscription');
         const context = await AsyncStorage.getItem('sakinah_onboarding_context');
-        const freq = await AsyncStorage.getItem('sakinah_prayer_frequency');
-        const times = await AsyncStorage.getItem('sakinah_prayer_times');
         const enabled = await AsyncStorage.getItem('sakinah_prayer_enabled');
+        const completed = await AsyncStorage.getItem('sakinah_completed_prayers');
         const bookmarksData = await AsyncStorage.getItem('sakinah_bookmarks');
 
         const today = new Date().toDateString();
@@ -105,19 +104,10 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         }
         if (context) setOnboardingContext(JSON.parse(context));
 
-        const loadedFreq = freq ? parseInt(freq, 10) : 5;
-        const loadedTimes = times ? JSON.parse(times) : ['05:30', '13:00', '16:30', '18:45', '20:15', '21:00', '22:00'];
         const loadedEnabled = enabled !== 'false'; // default true
-
-        if (freq) setPrayerFrequency(loadedFreq);
-        if (times) setPrayerTimes(loadedTimes);
         setPrayerEnabled(loadedEnabled);
+        
         if (bookmarksData) setBookmarks(JSON.parse(bookmarksData));
-
-        // Re-schedule notifications on app launch (OS may have cleared them)
-        if (loadedEnabled && onboarding === 'true') {
-          schedulePrayerNotifications(loadedTimes.slice(0, loadedFreq));
-        }
 
         // Supabase session initialization — wrapped in try/catch so missing env vars don't hang the app
         try {
@@ -207,27 +197,19 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     await AsyncStorage.setItem('sakinah_onboarding_context', JSON.stringify(context));
   };
 
-  const updatePrayerSettings = async (frequency: number, times: string[]) => {
-    setPrayerFrequency(frequency);
-    setPrayerTimes(times);
-    await AsyncStorage.setItem('sakinah_prayer_frequency', frequency.toString());
-    await AsyncStorage.setItem('sakinah_prayer_times', JSON.stringify(times));
-    
-    // Schedule actual notifications (only for the active frequency) if prayer is enabled
-    if (prayerEnabled) {
-      await schedulePrayerNotifications(times.slice(0, frequency));
-    }
+  const togglePrayerCompleted = async (prayerKey: string) => {
+    const newCompleted = { ...completedPrayers, [prayerKey]: !completedPrayers[prayerKey] };
+    setCompletedPrayers(newCompleted);
+    await AsyncStorage.setItem('sakinah_completed_prayers', JSON.stringify(newCompleted));
   };
 
-  const togglePrayer = async (enabled: boolean) => {
+  const togglePrayer = async (enabled: boolean, lat: number, lon: number) => {
     setPrayerEnabled(enabled);
     await AsyncStorage.setItem('sakinah_prayer_enabled', enabled.toString());
 
     if (enabled) {
-      // Re-schedule notifications with current settings
-      await schedulePrayerNotifications(prayerTimes.slice(0, prayerFrequency));
+      await schedulePrayerNotifications(lat, lon);
     } else {
-      // Cancel all notifications
       await cancelAllNotifications();
     }
   };
@@ -268,11 +250,10 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         markSubscribed,
         onboardingContext,
         setOnboardingContext: updateOnboardingContext,
-        prayerFrequency,
-        prayerTimes,
-        updatePrayerSettings,
         prayerEnabled,
         togglePrayer,
+        completedPrayers,
+        togglePrayerCompleted,
         bookmarks,
         addBookmark,
         removeBookmark,
