@@ -1,34 +1,40 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform, TextInput, KeyboardAvoidingView } from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useUser } from '../context/UserContext';
 import { useLanguage, LANGUAGE_NAMES, LANGUAGE_DESCRIPTIONS, INDIAN_LANGUAGES, Language } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 import { IslamicPattern, Crescent, OpenBook, Mandala, Mosque } from '../components/IslamicElements';
 import { QiblaCompass } from '../components/QiblaCompass';
-import { Check, ChevronDown, ChevronUp, Bell, Compass, Clock, ChevronLeft } from 'lucide-react-native';
+import { Check, ChevronDown, ChevronUp, Bell, ChevronLeft } from 'lucide-react-native';
 import * as Notifications from 'expo-notifications';
 import { Magnetometer } from 'expo-sensors';
 import * as Haptics from 'expo-haptics';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
+
 const TOPICS = [
   'anxiety', 'gratitude', 'patience', 'decision-making', 'grief', 'purpose', 'relationships', 'forgiveness', 'inner-peace', 'hardship'
+];
+
+const PRAYER_PREVIEW = [
+  { name: 'Fajr',    arabic: 'الفجر', icon: 'moon',   desc: 'Dawn prayer · Before sunrise' },
+  { name: 'Dhuhr',   arabic: 'الظهر', icon: 'sun',    desc: 'Midday prayer · After zenith' },
+  { name: 'Asr',     arabic: 'العصر', icon: 'sun',    desc: 'Afternoon prayer' },
+  { name: 'Maghrib', arabic: 'المغرب', icon: 'sunset', desc: 'Sunset prayer · After dusk' },
+  { name: 'Isha',    arabic: 'العشاء', icon: 'moon',   desc: 'Night prayer' },
 ];
 
 export default function Onboarding() {
   const [step, setStep] = useState(1);
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
   const [showIndianLangs, setShowIndianLangs] = useState(false);
-  const [freq, setFreq] = useState(5);
-  const [times, setTimes] = useState<string[]>(['05:30', '13:00', '16:30', '18:45', '20:15', '21:00', '22:00']);
-  const [showPicker, setShowPicker] = useState<number | null>(null);
   
   const router = useRouter();
-  const { completeOnboarding, updatePrayerSettings, setOnboardingContext, togglePrayer } = useUser();
+  const { completeOnboarding, setOnboardingContext, togglePrayer } = useUser();
   const { setLanguage, t, language, isIndia } = useLanguage();
   const { colors, isDark } = useTheme();
+
 
   const previewHeading = useSharedValue(0);
   const previewGlowOpacity = useSharedValue(0);
@@ -81,29 +87,9 @@ export default function Onboarding() {
     );
   };
 
-  const onTimeChange = (event: any, selectedDate?: Date) => {
-    setShowPicker(null);
-    if (selectedDate && showPicker !== null) {
-      const h = selectedDate.getHours().toString().padStart(2, '0');
-      const m = selectedDate.getMinutes().toString().padStart(2, '0');
-      const newTimes = [...times];
-      newTimes[showPicker] = `${h}:${m}`;
-      setTimes(newTimes);
-    }
-  };
-
-  const getPickerDate = (index: number) => {
-    const [h, m] = (times[index] || '12:00').split(':').map(Number);
-    const d = new Date();
-    d.setHours(h);
-    d.setMinutes(m);
-    return d;
-  };
-
   const requestNotifications = async () => {
     const { status } = await Notifications.requestPermissionsAsync();
     if (status !== 'granted') {
-      alert('Allow notifications to receive prayer reminders.');
       return false;
     }
     return true;
@@ -113,17 +99,15 @@ export default function Onboarding() {
 
   const finish = async () => {
     if (selectedTopics.length === 0) return;
-    await updatePrayerSettings(freq, times);
     await setOnboardingContext(selectedTopics);
     await completeOnboarding();
     const prompt = `I am seeking reflection on: ${selectedTopics.join(', ')}.`;
-    router.replace({ pathname: '/chat', params: { initialMessage: prompt } });
+    router.replace({ pathname: '/chat', params: { initialMessage: prompt } } as any);
   };
 
   const skipTopics = async () => {
-    await updatePrayerSettings(freq, times);
     await completeOnboarding();
-    router.replace('/');
+    router.replace('/' as any);
   };
 
   const selectLanguage = async (lang: Language) => {
@@ -202,68 +186,46 @@ export default function Onboarding() {
     );
   }
 
-  // Step 3: Prayer Notification Setup
+  // Step 3: Prayer System Introduction
   if (step === 3) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <TouchableOpacity style={styles.backBtnAbs} onPress={() => setStep(step - 1)}>
           <ChevronLeft size={28} color={colors.primary} />
         </TouchableOpacity>
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          <Bell size={64} color={colors.primary} style={{ alignSelf: 'center', marginBottom: 24 }} />
-          <Text style={[styles.title, { color: colors.primary }]}>{t('onboarding.notifications.title')}</Text>
-          <Text style={[styles.description, { color: colors.text }]}>{t('onboarding.notifications.desc')}</Text>
-          
-          <View style={[styles.freqContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={[styles.freqLabel, { color: colors.text }]}>{t('prayer.times.count')}</Text>
-            <View style={styles.stepper}>
-              <TouchableOpacity onPress={() => setFreq(Math.max(1, freq - 1))} style={styles.stepBtn}>
-                <Text style={[styles.stepBtnText, { color: colors.primary }]}>-</Text>
-              </TouchableOpacity>
-              <Text style={[styles.freqValue, { color: colors.primary }]}>{freq}</Text>
-              <TouchableOpacity onPress={() => setFreq(Math.min(7, freq + 1))} style={styles.stepBtn}>
-                <Text style={[styles.stepBtnText, { color: colors.primary }]}>+</Text>
-              </TouchableOpacity>
-            </View>
+        <View style={styles.scrollContent}>
+          <View style={{ alignItems: 'center', marginBottom: 24, marginTop: 60 }}>
+            <Mosque size={64} color={colors.primary} />
           </View>
+          <Text style={[styles.title, { color: colors.primary }]}>Prayer Times</Text>
+          <Text style={[styles.description, { color: colors.text }]}>
+            Sakinah automatically tracks all 5 daily prayers using precise astronomical calculations — no setup needed.
+          </Text>
 
-          <Text style={[styles.sectionSubtitle, { color: colors.primary, marginTop: 32 }]}>{t('prayer.times.setup')}</Text>
-          <View style={styles.timesContainer}>
-            {Array.from({ length: freq }).map((_, i) => (
-              <TouchableOpacity key={i} style={[styles.timeCardOnboarding, { borderBottomColor: colors.border, borderBottomWidth: 1, paddingVertical: 18 }]} onPress={() => setShowPicker(i)}>
-                <View style={styles.timeHeaderRow}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                    <Clock size={18} color={colors.primary} />
-                    <Text style={[styles.timeLabel, { color: colors.text }]}>Prayer {i + 1}</Text>
-                  </View>
-                  <Text style={[styles.timeValueText, { color: colors.primary }]}>{times[i]}</Text>
-                </View>
-              </TouchableOpacity>
+          <View style={styles.prayerNameList}>
+            {PRAYER_PREVIEW.map((p) => (
+              <View key={p.name} style={[styles.prayerNameRow, { borderBottomColor: colors.border }]}>
+                <Text style={[styles.prayerNameEn, { color: colors.text }]}>{p.name}</Text>
+                <Text style={[styles.prayerNameAr, { color: colors.primary }]}>{p.arabic}</Text>
+              </View>
             ))}
           </View>
 
-          {showPicker !== null && (
-            <DateTimePicker
-              value={getPickerDate(showPicker)}
-              mode="time"
-              is24Hour={true}
-              display={Platform.OS === 'android' ? 'spinner' : 'default'}
-              onChange={onTimeChange}
-            />
-          )}
-
-        </ScrollView>
+          <View style={[styles.prayerInfoBanner, { backgroundColor: colors.primary + '12', borderColor: colors.primary + '30', marginTop: 24 }]}>
+            <Bell size={16} color={colors.primary} />
+            <Text style={[styles.prayerInfoText, { color: colors.text }]}>
+              Allow notifications to receive a gentle reminder before each prayer begins.
+            </Text>
+          </View>
+        </View>
         <View style={styles.footer}>
           <TouchableOpacity style={[styles.continueBtn, { backgroundColor: colors.primary }]} onPress={async () => {
-            const granted = await requestNotifications();
-            if (granted) nextStep();
-          }}>
-            <Text style={[styles.continueText, { color: colors.background }]}>{t('onboarding.next')}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.skipBtn} onPress={async () => {
-            await togglePrayer(false);
+            await requestNotifications();
             nextStep();
           }}>
+            <Text style={[styles.continueText, { color: colors.background }]}>Allow Notifications</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.skipBtn} onPress={nextStep}>
             <Text style={[styles.skipText, { color: colors.text }]}>Skip for now</Text>
           </TouchableOpacity>
         </View>
@@ -356,4 +318,50 @@ const styles = StyleSheet.create({
   skipBtn: { alignItems: 'center', paddingVertical: 8 },
   skipText: { fontSize: 13, fontWeight: '500', opacity: 0.5 },
   backBtnAbs: { position: 'absolute', top: 50, left: 24, zIndex: 10 },
+
+  // Prayer preview (Step 3)
+  prayerPreviewList: { gap: 10, marginBottom: 24 },
+  prayerPreviewCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  prayerPreviewLeft: { flex: 1, gap: 2 },
+  prayerPreviewName: { fontSize: 16, fontWeight: '700', letterSpacing: 0.5 },
+  prayerPreviewArabic: { fontSize: 13, opacity: 0.5, fontFamily: 'serif' },
+  prayerPreviewDesc: { fontSize: 12, opacity: 0.55, marginTop: 2 },
+  prayerPreviewDot: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  prayerInfoBanner: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    marginTop: 8,
+  },
+  prayerInfoText: { flex: 1, fontSize: 13, lineHeight: 20, opacity: 0.75 },
+
+  // Compact prayer name list
+  prayerNameList: { width: '100%', borderRadius: 20, overflow: 'hidden' },
+  prayerNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+    paddingHorizontal: 4,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  prayerNameEn: { fontSize: 16, fontWeight: '500' },
+  prayerNameAr: { fontSize: 18, fontFamily: 'serif', opacity: 0.85 },
 });

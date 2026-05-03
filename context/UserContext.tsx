@@ -26,11 +26,9 @@ interface UserContextType {
   onboardingContext: string[];
   setOnboardingContext: (context: string[]) => void;
   prayerEnabled: boolean;
-  togglePrayer: (enabled: boolean, lat: number, lon: number) => void;
+  togglePrayer: (enabled: boolean, lat?: number, lon?: number) => void;
   completedPrayers: Record<string, boolean>;
   togglePrayerCompleted: (prayerKey: string) => void;
-  prayerEnabled: boolean;
-  togglePrayer: (enabled: boolean) => void;
   bookmarks: QuranBookmark[];
   addBookmark: (bookmark: QuranBookmark) => void;
   removeBookmark: (surah: number, ayah: number) => void;
@@ -203,13 +201,13 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     await AsyncStorage.setItem('sakinah_completed_prayers', JSON.stringify(newCompleted));
   };
 
-  const togglePrayer = async (enabled: boolean, lat: number, lon: number) => {
+  const togglePrayer = async (enabled: boolean, lat?: number, lon?: number) => {
     setPrayerEnabled(enabled);
     await AsyncStorage.setItem('sakinah_prayer_enabled', enabled.toString());
 
-    if (enabled) {
+    if (enabled && lat != null && lon != null) {
       await schedulePrayerNotifications(lat, lon);
-    } else {
+    } else if (!enabled) {
       await cancelAllNotifications();
     }
   };
