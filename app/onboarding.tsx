@@ -193,7 +193,7 @@ export default function Onboarding() {
         <TouchableOpacity style={styles.backBtnAbs} onPress={() => setStep(step - 1)}>
           <ChevronLeft size={28} color={colors.primary} />
         </TouchableOpacity>
-        <View style={styles.scrollContent}>
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           <View style={{ alignItems: 'center', marginBottom: 24, marginTop: 60 }}>
             <Mosque size={64} color={colors.primary} />
           </View>
@@ -217,7 +217,7 @@ export default function Onboarding() {
               Allow notifications to receive a gentle reminder before each prayer begins.
             </Text>
           </View>
-        </View>
+        </ScrollView>
         <View style={styles.footer}>
           <TouchableOpacity style={[styles.continueBtn, { backgroundColor: colors.primary }]} onPress={async () => {
             await requestNotifications();

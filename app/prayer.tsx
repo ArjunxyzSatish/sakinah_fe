@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Linking, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Linking, Platform, Alert } from 'react-native';
 import { Magnetometer } from 'expo-sensors';
 import * as Location from 'expo-location';
 import * as Haptics from 'expo-haptics';
@@ -9,6 +9,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { useUser } from '../context/UserContext';
 import { IslamicPattern, Mosque } from '../components/IslamicElements';
 import { QiblaCompass } from '../components/QiblaCompass';
+import { useAppAlert } from '../components/AppAlert';
 import { Compass, Clock, Bell, MapPin, Settings, CheckCircle2, Circle, Check } from 'lucide-react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming, withSpring } from 'react-native-reanimated';
 
@@ -29,6 +30,7 @@ export default function PrayerScreen() {
   const { t, language } = useLanguage();
   const { prayerEnabled, completedPrayers, togglePrayerCompleted, togglePrayer } = useUser();
   const router = useRouter();
+  const { showAlert, alertElement } = useAppAlert();
 
   const [heading, setHeading] = useState(0);
   const [qiblaAngle, setQiblaAngle] = useState(0);
@@ -383,12 +385,14 @@ export default function PrayerScreen() {
                     ]}
                   >
                     <View style={styles.timeInfo}>
-                      <Text style={[styles.timeLabel, { color: isNext ? colors.primary : colors.text, fontSize: 24, fontWeight: '900' }]}>
-                        {prayer.name}
-                      </Text>
-                      <Text style={{ color: isNext ? colors.primary : colors.text, opacity: isNext ? 0.55 : 0.35, fontSize: 13, fontFamily: 'serif', marginTop: 1 }}>
-                        {PRAYER_ARABIC[prayer.name]}
-                      </Text>
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingRight: 16 }}>
+                        <Text style={[styles.timeLabel, { color: isNext ? colors.primary : colors.text, fontSize: 24, fontWeight: '900', marginBottom: 0 }]}>
+                          {prayer.name}
+                        </Text>
+                        <Text style={{ color: isNext ? colors.primary : colors.text, opacity: isNext ? 0.8 : 0.5, fontSize: 28, fontFamily: 'serif' }}>
+                          {PRAYER_ARABIC[prayer.name]}
+                        </Text>
+                      </View>
                       <View style={{ flexDirection: 'row', alignItems: 'flex-end', marginTop: 6, gap: 3 }}>
                         <Text style={[styles.timeValue, { color: isNext ? colors.primary : colors.text, opacity: isNext ? 1 : 0.7, fontSize: 20, fontWeight: '700' }]}>
                           {prayer.timeStr.replace(/\s?(AM|PM)$/i, '')}
@@ -428,6 +432,7 @@ export default function PrayerScreen() {
         )}
       </ScrollView>
 
+      {alertElement}
     </View>
   );
 }
