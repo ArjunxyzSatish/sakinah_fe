@@ -1,6 +1,6 @@
 import { Slot, usePathname, useRouter, useRootNavigationState } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Text, ImageBackground, StatusBar as RNStatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Home, MessageCircle, Image as ImageIcon, Settings, Bookmark, BookOpen } from 'lucide-react-native';
 import { Mosque } from '../components/IslamicElements';
@@ -49,10 +49,11 @@ function AppLayout() {
   // This prevents the blank white screen when SplashScreen.preventAutoHideAsync fails
   if (!langLoaded || !userLoaded) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#0F3D2E', justifyContent: 'center', alignItems: 'center' }}>
-        <Text style={{ color: '#D4AF37', fontSize: 32, fontWeight: 'bold', letterSpacing: 2 }}>Sakinah</Text>
-        <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, marginTop: 8 }}>Loading...</Text>
-      </SafeAreaView>
+      <ImageBackground
+        source={require('../assets/splash-icon.png')}
+        style={{ flex: 1, width: '100%', height: '100%' }}
+        resizeMode="cover"
+      />
     );
   }
 
