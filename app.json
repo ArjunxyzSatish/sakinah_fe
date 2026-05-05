@@ -5,7 +5,7 @@
     "scheme": "sakinah",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/logo.jpeg",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "androidStatusBar": {
@@ -13,7 +13,7 @@
       "barStyle": "light-content"
     },
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/splash.jpeg",
       "resizeMode": "contain",
       "backgroundColor": "#F7F5EF"
     },
@@ -22,7 +22,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/logo.jpeg",
         "backgroundColor": "#F7F5EF"
       },
       "package": "com.faithflow.sakinah",

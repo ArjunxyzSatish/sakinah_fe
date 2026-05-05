@@ -58,9 +58,14 @@ export async function cancelAllNotifications() {
 import { getTodayPrayerTimes } from './adhanHelper';
 import { Coordinates, CalculationMethod, PrayerTimes } from 'adhan';
 
+let isScheduling = false;
+
 export async function schedulePrayerNotifications(lat: number, lon: number) {
   if (Platform.OS === 'web') return;
+  if (isScheduling) return;
 
+  isScheduling = true;
+  try {
   // Ensure permissions are granted before scheduling
   const hasPermission = await requestNotificationPermissions();
   if (!hasPermission) {
@@ -113,5 +118,8 @@ export async function schedulePrayerNotifications(lat: number, lon: number) {
     }
   }
 
-  console.log(`Scheduled ${count} adhan notifications for the next 7 days.`);
+    console.log(`Scheduled ${count} adhan notifications for the next 7 days.`);
+  } finally {
+    isScheduling = false;
+  }
 }
