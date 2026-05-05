@@ -41,5 +41,4 @@ yarn-error.*
 
 # generated native folders
 /ios
-/android
 application-5e2f59bf-f402-4792-b6c4-bb40e01589d4.apk
