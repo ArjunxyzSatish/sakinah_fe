@@ -9,7 +9,7 @@ import { LanguageProvider, useLanguage } from '../context/LanguageContext';
 import { UserProvider, useUser } from '../context/UserContext';
 import { ThemeProvider, useTheme } from '../context/ThemeContext';
 import { VerseProvider } from '../context/VerseContext';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import * as SplashScreen from 'expo-splash-screen';
 
 try { SplashScreen.preventAutoHideAsync(); } catch (e) { console.warn('SplashScreen.preventAutoHideAsync failed:', e); }
@@ -23,37 +23,36 @@ function AppLayout() {
   const { hasCompletedOnboarding, isLoaded: userLoaded } = useUser();
   const { colors, isDark } = useTheme();
 
+  // Controls our RN splash overlay (independent of native splash)
+  const [showSplash, setShowSplash] = useState(true);
+
+  useEffect(() => {
+    // Hide native splash immediately so only our RN splash shows
+    SplashScreen.hideAsync().catch(() => {});
+  }, []);
+
   useEffect(() => {
     if (!rootNavigationState?.key) return;
-    
     if (langLoaded && userLoaded) {
       if (!hasCompletedOnboarding && pathname !== '/onboarding') {
         router.replace('/onboarding');
       }
-      SplashScreen.hideAsync().catch(() => {});
+      setShowSplash(false);
     }
   }, [langLoaded, userLoaded, hasCompletedOnboarding, pathname, rootNavigationState?.key]);
 
-  // Safety: force-hide splash screen after 8s no matter what
-  // Prevents the app from being permanently stuck on a blank/splash screen
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      SplashScreen.hideAsync().catch(() => {});
-    }, 8000);
-    return () => clearTimeout(timer);
-  }, []);
-
   const isNavigationVisible = pathname !== '/onboarding' && pathname !== '/auth' && langLoaded && userLoaded;
 
-  // Show a branded loading screen while providers initialize
-  // This prevents the blank white screen when SplashScreen.preventAutoHideAsync fails
-  if (!langLoaded || !userLoaded) {
+  // RN full-screen splash overlay — shows until showSplash is false
+  if (showSplash || !langLoaded || !userLoaded) {
     return (
-      <ImageBackground
-        source={require('../assets/splash-icon.png')}
-        style={{ flex: 1, width: '100%', height: '100%' }}
-        resizeMode="cover"
-      />
+      <View style={[StyleSheet.absoluteFillObject, { zIndex: 9999 }]}>
+        <ImageBackground
+          source={require('../assets/splash-icon.png')}
+          style={{ flex: 1 }}
+          resizeMode="cover"
+        />
+      </View>
     );
   }
 
