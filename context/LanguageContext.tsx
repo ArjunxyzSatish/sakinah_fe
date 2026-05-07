@@ -762,15 +762,20 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     setIsIndia(detectIsIndia());
 
     const loadLanguage = async () => {
-      const saved = await AsyncStorage.getItem('sakinah_language') as Language;
-      if (saved && ALL_LANGUAGES.includes(saved)) {
-        setLanguageState(saved);
-        const isRTL = RTL_LANGUAGES.includes(saved);
-        if (I18nManager.isRTL !== isRTL) {
-          I18nManager.forceRTL(isRTL);
+      try {
+        const saved = await AsyncStorage.getItem('sakinah_language') as Language;
+        if (saved && ALL_LANGUAGES.includes(saved)) {
+          setLanguageState(saved);
+          const isRTL = RTL_LANGUAGES.includes(saved);
+          if (I18nManager.isRTL !== isRTL) {
+            I18nManager.forceRTL(isRTL);
+          }
         }
+      } catch (e) {
+        console.warn('LanguageContext loadLanguage error:', e);
+      } finally {
+        setIsLoaded(true);
       }
-      setIsLoaded(true);
     };
     loadLanguage();
   }, []);

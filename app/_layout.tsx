@@ -44,18 +44,6 @@ function AppLayout() {
   const isNavigationVisible = pathname !== '/onboarding' && pathname !== '/auth' && langLoaded && userLoaded;
 
   // RN full-screen splash overlay — shows until showSplash is false
-  if (showSplash || !langLoaded || !userLoaded) {
-    return (
-      <View style={[StyleSheet.absoluteFillObject, { zIndex: 9999 }]}>
-        <ImageBackground
-          source={require('../assets/splash-icon.png')}
-          style={{ flex: 1 }}
-          resizeMode="cover"
-        />
-      </View>
-    );
-  }
-
   const navItems = [
     { path: '/', icon: Home, label: t('nav.home'), custom: null },
     { path: '/chat', icon: MessageCircle, label: t('nav.reflect'), custom: null },
@@ -89,13 +77,13 @@ function AppLayout() {
                       size={24}
                       color={isActive ? colors.primary : (isDark ? 'rgba(247, 245, 239, 0.4)' : 'rgba(26, 26, 26, 0.4)')}
                     />
-                  ) : (
+                  ) : Icon ? (
                     <Icon
                       strokeWidth={isActive ? 2.5 : 1.5}
                       size={24}
                       color={isActive ? colors.primary : (isDark ? 'rgba(247, 245, 239, 0.4)' : 'rgba(26, 26, 26, 0.4)')}
                     />
-                  )}
+                  ) : null}
                   <Text style={[
                     styles.navLabel,
                     { color: isActive ? colors.primary : (isDark ? 'rgba(247, 245, 239, 0.4)' : 'rgba(26, 26, 26, 0.4)') }
@@ -106,6 +94,16 @@ function AppLayout() {
               );
             })}
           </View>
+        </View>
+      )}
+
+      {(showSplash || !langLoaded || !userLoaded) && (
+        <View style={[StyleSheet.absoluteFillObject, { zIndex: 9999 }]}>
+          <ImageBackground
+            source={require('../assets/splash-icon.png')}
+            style={{ flex: 1 }}
+            resizeMode="cover"
+          />
         </View>
       )}
     </SafeAreaView>
