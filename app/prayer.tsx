@@ -18,11 +18,11 @@ import { getTodayPrayerTimes, getFallbackCoordinates, PrayerData } from '../util
 const { width } = Dimensions.get('window');
 
 const PRAYER_ARABIC: Record<string, string> = {
-  Fajr:    'الفجر',
-  Dhuhr:   'الظهر',
-  Asr:     'العصر',
+  Fajr: 'الفجر',
+  Dhuhr: 'الظهر',
+  Asr: 'العصر',
   Maghrib: 'المغرب',
-  Isha:    'العشاء',
+  Isha: 'العشاء',
 };
 
 export default function PrayerScreen() {
@@ -172,10 +172,10 @@ export default function PrayerScreen() {
 
   useEffect(() => {
     if (qiblaAngle === 0 && heading === 0) return;
-    
+
     const diff = Math.abs(qiblaAngle - heading);
     const isFacing = diff < 5 || diff > 355;
-    
+
     if (isFacing && !wasFacingQibla.current) {
       wasFacingQibla.current = true;
       glowOpacity.value = withSpring(1);
@@ -228,7 +228,7 @@ export default function PrayerScreen() {
       const now = new Date().getTime();
       let next = prayerData.find(p => p.time.getTime() > now);
       if (!next) next = prayerData[0]; // Next is Fajr tomorrow
-      
+
       setNextPrayer(next);
 
       let diff = next.time.getTime() - now;
@@ -351,7 +351,7 @@ export default function PrayerScreen() {
                 </View>
                 <View style={{ alignItems: 'flex-end' }}>
                   <Text style={[styles.countdownSub, { color: colors.background, opacity: 0.8 }]}>Starts in</Text>
-                  <Text style={[styles.countdownTime, { color: colors.background }]}>-{timeRemaining}</Text>
+                  <Text style={[styles.countdownTime, { color: colors.background }]}>{timeRemaining}</Text>
                 </View>
               </View>
             )}
@@ -369,8 +369,8 @@ export default function PrayerScreen() {
                 const isCompleted = completedPrayers[prayerKey];
 
                 return (
-                  <TouchableOpacity 
-                    key={i} 
+                  <TouchableOpacity
+                    key={i}
                     onPress={() => {
                       if (canMark) {
                         togglePrayerCompleted(prayerKey);
@@ -378,7 +378,7 @@ export default function PrayerScreen() {
                     }}
                     activeOpacity={canMark ? 0.8 : 1}
                     style={[
-                      styles.timeCard, 
+                      styles.timeCard,
                       { backgroundColor: isNext ? colors.primary + '10' : colors.card, borderColor: isNext ? colors.primary : colors.cardBorder },
                       isNext && { borderWidth: 2, transform: [{ scale: 1.02 }] },
                       isPast && !isNext && { opacity: 0.6 }
@@ -402,7 +402,7 @@ export default function PrayerScreen() {
                         </Text>
                       </View>
                     </View>
-                    
+
                     <View style={styles.checkboxBtn}>
                       {isCompleted ? (
                         <CheckCircle2 size={32} color={colors.primary} />
@@ -469,13 +469,13 @@ const styles = StyleSheet.create({
   disabledBannerText: { fontSize: 14, fontWeight: '500', opacity: 0.4 },
   enableSettingsBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 20, paddingVertical: 12, borderRadius: 24, borderWidth: 1, marginTop: 4 },
   enableSettingsBtnText: { fontSize: 13, fontWeight: '600' },
-  
+
   scheduleHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, paddingLeft: 8 },
   scheduleHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   sectionSubtitle: { fontSize: 12, fontWeight: 'bold', letterSpacing: 1, textTransform: 'uppercase' },
   completedBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16 },
   completedBadgeText: { fontSize: 11, fontWeight: 'bold' },
-  
+
   countdownCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 20, borderRadius: 24, marginBottom: 16, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 4 },
   countdownSub: { fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 },
   countdownLabel: { fontSize: 20, fontWeight: '900' },

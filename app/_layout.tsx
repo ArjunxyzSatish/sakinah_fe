@@ -27,17 +27,14 @@ function AppLayout() {
   const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
-    // Hide native splash immediately so only our RN splash shows
-    SplashScreen.hideAsync().catch(() => {});
-  }, []);
-
-  useEffect(() => {
     if (!rootNavigationState?.key) return;
     if (langLoaded && userLoaded) {
       if (!hasCompletedOnboarding && pathname !== '/onboarding') {
         router.replace('/onboarding');
       }
-      setShowSplash(false);
+      SplashScreen.hideAsync()
+        .catch(() => {})
+        .finally(() => setShowSplash(false));
     }
   }, [langLoaded, userLoaded, hasCompletedOnboarding, pathname, rootNavigationState?.key]);
 
