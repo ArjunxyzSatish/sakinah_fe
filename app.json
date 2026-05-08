@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Sakinah",
-    "slug": "sakinav2",
+    "slug": "sakinah",
     "scheme": "sakinah",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -9,13 +9,13 @@
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "androidStatusBar": {
-      "backgroundColor": "#F7F5EF",
-      "barStyle": "dark-content"
+      "backgroundColor": "#004431",
+      "barStyle": "light-content"
     },
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "cover",
-      "backgroundColor": "#F7F5EF"
+      "backgroundColor": "#004431"
     },
     "ios": {
       "supportsTablet": true
@@ -41,7 +41,7 @@
         {
           "image": "./assets/splash-icon.png",
           "resizeMode": "cover",
-          "backgroundColor": "#F7F5EF"
+          "backgroundColor": "#004431"
         }
       ],
       "expo-localization",
@@ -53,9 +53,9 @@
         "origin": false
       },
       "eas": {
-        "projectId": "8dd83f64-7224-4e49-abac-c44a8929d898"
+        "projectId": "deffa91f-d2e8-4a8a-af20-867dbe7b98e4"
       }
     },
-    "owner": "arjun.satish"
+    "owner": "faithflowtech"
   }
 }

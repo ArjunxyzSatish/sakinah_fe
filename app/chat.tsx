@@ -251,7 +251,7 @@ export default function Chat() {
           <View style={styles.emptyState}>
             <Mosque size={72} color={colors.primary} style={{ opacity: 0.12, marginBottom: 20 }} />
             <Text style={[styles.emptyStateTitle, { color: colors.primary }]}>
-              {visuallyClear ? 'A fresh start. ✦' : 'What\'s on your heart?'}
+              {visuallyClear ? 'A fresh start. ✦' : 'What\'s on your mind?'}
             </Text>
             <Text style={[styles.emptyStateSubtitle, { color: colors.text }]}>
               {visuallyClear
