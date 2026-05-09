@@ -1,0 +1,29 @@
+# Dependencies installed on EAS
+node_modules/
+
+# Expo and local export caches
+.expo/
+.expo-export-debug/
+dist/
+web-build/
+expo-env.d.ts
+
+# Android build outputs and local Gradle caches
+android/.gradle/
+android/build/
+android/app/build/
+android/app/.cxx/
+android/app/.externalNativeBuild/
+
+# Local environment and logs
+.env
+.env.local
+.env*.local
+*.log
+metro-*.log
+
+# Misc local artifacts
+*.apk
+*.aab
+*.tsbuildinfo
+.DS_Store

@@ -118,7 +118,7 @@ export default function Onboarding() {
   // Step 1: Language Selection
   if (step === 1) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background, padding: 24 }]}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
         <IslamicPattern color={isDark ? 'rgba(247, 245, 239, 0.03)' : 'rgba(15, 61, 46, 0.04)'} />
         <ScrollView contentContainerStyle={styles.langScrollContent} showsVerticalScrollIndicator={false}>
           <View style={styles.contentContainer}>
@@ -277,7 +277,7 @@ export default function Onboarding() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   contentContainer: { alignItems: 'center', gap: 40 },
-  langScrollContent: { paddingTop: 80, paddingBottom: 60 },
+  langScrollContent: { paddingTop: 80, paddingBottom: 60, paddingHorizontal: 24 },
   brand: { fontSize: 24, letterSpacing: 8, textTransform: 'uppercase' },
   subtitle: { fontFamily: 'Georgia', fontStyle: 'italic', fontSize: 18, opacity: 0.7 },
   langContainer: { width: '100%', gap: 12, marginTop: 20 },
