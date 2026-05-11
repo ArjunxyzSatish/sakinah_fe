@@ -8,12 +8,9 @@ dist/
 web-build/
 expo-env.d.ts
 
-# Android build outputs and local Gradle caches
-android/.gradle/
-android/build/
-android/app/build/
-android/app/.cxx/
-android/app/.externalNativeBuild/
+# Native directories (forces EAS to run prebuild freshly in the cloud)
+android/
+ios/
 
 # Local environment and logs
 .env
