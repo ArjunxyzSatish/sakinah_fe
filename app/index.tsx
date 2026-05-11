@@ -34,10 +34,11 @@ export default function Home() {
       setShowLimitOverlay(true);
       return;
     }
-    if (user && !isSubscribed && versesRemaining <= 0) {
-      setShowPaywall(true);
-      return;
-    }
+    // Logged-in free limit (Temporarily disabled for all logged-in users)
+    // if (user && !isSubscribed && versesRemaining <= 0) {
+    //   setShowPaywall(true);
+    //   return;
+    // }
 
     setRefreshing(true);
     try {

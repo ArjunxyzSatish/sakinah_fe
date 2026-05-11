@@ -25,7 +25,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#F7F5EF"
       },
-      "package": "com.faithflow.sakinah",
+      "package": "com.faithflow.sakinahapp",
       "permissions": [
         "android.permission.RECEIVE_BOOT_COMPLETED",
         "android.permission.SCHEDULE_EXACT_ALARM"

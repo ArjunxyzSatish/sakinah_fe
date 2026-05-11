@@ -91,11 +91,11 @@ export default function Chat() {
       setShowLimitOverlay(true);
       return;
     }
-    // Logged-in free limit
-    if (user && !isSubscribed && llmCallsRemaining <= 0) {
-      setShowPaywall(true);
-      return;
-    }
+    // Logged-in free limit (Temporarily disabled for all logged-in users)
+    // if (user && !isSubscribed && llmCallsRemaining <= 0) {
+    //   setShowPaywall(true);
+    //   return;
+    // }
 
     const userMessage = { role: 'user', content: messageText };
     setMessages(prev => [...prev, userMessage]);
