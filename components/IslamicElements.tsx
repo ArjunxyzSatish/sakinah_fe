@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, ViewStyle } from 'react-native';
-import Svg, { Defs, Pattern, Path, Circle, Rect, Line } from 'react-native-svg';
+import Svg, { Defs, Pattern, Path, Circle, Rect, Line, G } from 'react-native-svg';
 
 interface ElementProps {
   size?: number;
@@ -23,8 +23,10 @@ export const IslamicPattern = ({ color = 'rgba(15, 61, 46, 0.05)' }: { color?: s
 
 export const Crescent = ({ size = 100, color = 'black', style }: ElementProps) => (
   <Svg viewBox="0 0 100 100" width={size} height={size} style={style}>
-    <Path d="M55 5 A45 45 0 1 1 5 55 A35 35 0 1 0 55 5 Z" fill={color} />
-    <Path d="M45 40 L48 48 L56 48 L50 53 L52 61 L45 56 L38 61 L40 53 L34 48 L42 48 Z" fill={color} opacity="0.7" />
+    <G transform="translate(100 0) scale(-1 1)">
+      <Path d="M55 5 A45 45 0 1 1 5 55 A35 35 0 1 0 55 5 Z" fill={color} />
+      <Path d="M45 40 L48 48 L56 48 L50 53 L52 61 L45 56 L38 61 L40 53 L34 48 L42 48 Z" fill={color} opacity="0.7" />
+    </G>
   </Svg>
 );
 

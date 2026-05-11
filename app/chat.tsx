@@ -91,11 +91,11 @@ export default function Chat() {
       setShowLimitOverlay(true);
       return;
     }
-    // Logged-in free limit
-    if (user && !isSubscribed && llmCallsRemaining <= 0) {
-      setShowPaywall(true);
-      return;
-    }
+    // Logged-in free limit (Temporarily disabled for all logged-in users)
+    // if (user && !isSubscribed && llmCallsRemaining <= 0) {
+    //   setShowPaywall(true);
+    //   return;
+    // }
 
     const userMessage = { role: 'user', content: messageText };
     setMessages(prev => [...prev, userMessage]);
@@ -251,7 +251,7 @@ export default function Chat() {
           <View style={styles.emptyState}>
             <Mosque size={72} color={colors.primary} style={{ opacity: 0.12, marginBottom: 20 }} />
             <Text style={[styles.emptyStateTitle, { color: colors.primary }]}>
-              {visuallyClear ? 'A fresh start. ✦' : 'What\'s on your heart?'}
+              {visuallyClear ? 'A fresh start. ✦' : 'What\'s on your mind?'}
             </Text>
             <Text style={[styles.emptyStateSubtitle, { color: colors.text }]}>
               {visuallyClear
