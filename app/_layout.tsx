@@ -124,7 +124,7 @@ class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasErr
     if (this.state.hasError) {
       return (
         <SafeAreaView style={{ flex: 1, backgroundColor: '#0F3D2E', justifyContent: 'center', padding: 32 }}>
-          <Text style={{ color: '#fff', fontSize: 22, fontWeight: 'bold', marginBottom: 16 }}>Sakinah crashed</Text>
+          <Text style={{ color: '#fff', fontSize: 22, fontWeight: 'bold', marginBottom: 16 }}>MuslimSpace crashed</Text>
           <Text style={{ color: '#faa', fontSize: 14, marginBottom: 12 }}>{String(this.state.error)}</Text>
           <Text style={{ color: '#ccc', fontSize: 11 }}>{this.state.error?.stack?.slice(0, 800)}</Text>
         </SafeAreaView>

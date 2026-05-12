@@ -132,7 +132,7 @@ export default function Settings() {
                         ? { color: '#D4AF37', fontWeight: '700' }
                         : { color: colors.primary, opacity: 0.6 }
                     ]}>
-                      {isSubscribed ? '✦ Sakinah Premium' : 'Free Member'}
+                      {isSubscribed ? '✦ MuslimSpace Premium' : 'Free Member'}
                     </Text>
                   </View>
                 </View>

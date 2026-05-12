@@ -70,8 +70,9 @@ export default function AuthScreen() {
           password,
         });
         if (error) throw error;
+        router.replace('/');
       } else {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -82,9 +83,14 @@ export default function AuthScreen() {
           },
         });
         if (error) throw error;
-        showAlert('Check Your Email', 'A confirmation link has been sent to your email address.', undefined, '📬');
+        
+        if (data.session) {
+          router.replace('/');
+        } else {
+          showAlert('Check Your Email', 'A confirmation link has been sent to your email address.', undefined, '📬');
+          setIsLogin(true);
+        }
       }
-      router.replace('/');
     } catch (error: any) {
       showAlert('Sign-in Error', error.message, undefined, '⚠️');
     } finally {
@@ -169,7 +175,7 @@ export default function AuthScreen() {
         <View style={styles.header}>
           <Crescent size={60} color={colors.primary} />
           <Text style={[styles.title, { color: colors.text }]}>
-            {isLogin ? 'Welcome Back' : 'Join Sakinah'}
+            {isLogin ? 'Welcome Back' : 'Join MuslimSpace'}
           </Text>
           <Text style={[styles.subtitle, { color: colors.text, opacity: 0.6 }]}>
             {isLogin

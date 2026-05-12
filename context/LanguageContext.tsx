@@ -100,7 +100,7 @@ const translations: Record<Language, Record<string, string>> = {
     'prayer.times.count': 'Prayers per day',
     'prayer.times.setup': 'Set Notification Times',
     'settings.about': 'About',
-    'settings.aboutDesc': "Sakinah is a space for quiet reflection, grounded in the teachings of the Qur'an.",
+    'settings.aboutDesc': "MuslimSpace is a space for quiet reflection, grounded in the teachings of the Qur'an.",
     'settings.version': 'Version 1.1.0',
     'onboarding.step1.title': "Reflect through the Qur'an",
     'onboarding.step1.subtitle': 'Find relevant verses and guidance for real-life situations',

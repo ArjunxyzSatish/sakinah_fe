@@ -123,7 +123,7 @@ export default function Onboarding() {
         <ScrollView contentContainerStyle={styles.langScrollContent} showsVerticalScrollIndicator={false}>
           <View style={styles.contentContainer}>
             <Crescent size={64} color={colors.primary} style={{ marginBottom: 12 }} />
-            <Text style={[styles.brand, { color: colors.text }]}>sakinah</Text>
+            <Text style={[styles.brand, { color: colors.text }]}>MuslimSpace</Text>
             <Text style={[styles.subtitle, { color: colors.text }]}>Find quiet in the Qur'an</Text>
             <View style={styles.langContainer}>
               <TouchableOpacity style={[styles.langBtn, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={() => selectLanguage('en')}>
@@ -199,7 +199,7 @@ export default function Onboarding() {
           </View>
           <Text style={[styles.title, { color: colors.primary }]}>Prayer Times</Text>
           <Text style={[styles.description, { color: colors.text }]}>
-            Sakinah automatically tracks all 5 daily prayers using precise astronomical calculations — no setup needed.
+            MuslimSpace automatically tracks all 5 daily prayers using precise astronomical calculations — no setup needed.
           </Text>
 
           <View style={styles.prayerNameList}>
