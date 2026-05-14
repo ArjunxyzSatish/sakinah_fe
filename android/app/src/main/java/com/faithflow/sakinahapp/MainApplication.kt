@@ -1,4 +1,4 @@
-package com.faithflow.sakinah
+package com.faithflow.sakinahapp
 
 import android.app.Application
 import android.content.res.Configuration

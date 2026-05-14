@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Sakinah",
+    "name": "MuslimSpace",
     "slug": "sakinah",
     "scheme": "sakinah",
     "version": "1.0.0",
@@ -21,6 +21,11 @@
       "supportsTablet": true
     },
     "android": {
+      "splash": {
+        "image": "./assets/transparent.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#004431"
+      },
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#F7F5EF"
@@ -29,6 +34,9 @@
       "permissions": [
         "android.permission.RECEIVE_BOOT_COMPLETED",
         "android.permission.SCHEDULE_EXACT_ALARM"
+      ],
+      "blockedPermissions": [
+        "android.permission.ACTIVITY_RECOGNITION"
       ]
     },
     "web": {
@@ -46,7 +54,16 @@
       ],
       "expo-localization",
       "@react-native-community/datetimepicker",
-      "expo-notifications"
+      "expo-notifications",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "compileSdkVersion": 35,
+            "targetSdkVersion": 35
+          }
+        }
+      ]
     ],
     "extra": {
       "router": {
