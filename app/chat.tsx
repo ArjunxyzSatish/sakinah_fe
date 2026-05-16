@@ -3,6 +3,7 @@ import { View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView, Keyboa
 import { Send, Trash2 } from 'lucide-react-native';
 import { streamReflection, saveChat } from '../services/openai';
 import { parseStreamedContent, ParsedContent } from '../utils/parser';
+import { Keyboard } from 'react-native';
 
 const PROMPTS = [
   { emoji: '🌿', text: "I'm feeling overwhelmed. How can Islam help me find peace?" },
@@ -31,6 +32,13 @@ export default function Chat() {
   const [visuallyClear, setVisuallyClear] = useState(false);
   const { showAlert, alertElement } = useAppAlert();
   const scrollViewRef = useRef<ScrollView>(null);
+  const [isKeyboardVisible, setKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', () => setKeyboardVisible(true));
+    const hideSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide', () => setKeyboardVisible(false));
+    return () => { showSub.remove(); hideSub.remove(); };
+  }, []);
 
   const params = useLocalSearchParams();
   const router = useRouter();
@@ -296,7 +304,14 @@ export default function Chat() {
         )}
       </ScrollView>
 
-      <View style={[styles.inputContainer, { borderTopColor: colors.border, backgroundColor: colors.inputBg }]}>
+      <View style={[
+        styles.inputContainer, 
+        { 
+          borderTopColor: colors.border, 
+          backgroundColor: colors.inputBg,
+          paddingBottom: isKeyboardVisible ? 16 : (Platform.OS === 'ios' ? 120 : 100)
+        }
+      ]}>
         {messages.length > 0 && (
           <TouchableOpacity
             style={[styles.sendBtn, { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }]}
@@ -531,7 +546,6 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     gap: 12,
     padding: 16,
-    paddingBottom: Platform.OS === 'ios' ? 120 : 100, // accommodate nav block
     borderTopWidth: 1,
   },
   input: {
