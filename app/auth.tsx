@@ -11,6 +11,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { IslamicPattern, Crescent } from '../components/IslamicElements';
 import { ChevronLeft, Mail, Lock, User, Chrome } from 'lucide-react-native';
 import { useAppAlert } from '../components/AppAlert';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 // Google Sign-in is imported dynamically to prevent crashes in Expo Go
 
 export default function AuthScreen() {
@@ -27,6 +28,7 @@ export default function AuthScreen() {
   const { colors, isDark } = useTheme();
   const { t } = useLanguage();
   const { showAlert, alertElement } = useAppAlert();
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     // Handle OAuth callback if app was opened/resumed via deep link with tokens
@@ -162,6 +164,7 @@ export default function AuthScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top : 0}
       style={[styles.container, { backgroundColor: colors.background }]}
     >
       {alertElement}

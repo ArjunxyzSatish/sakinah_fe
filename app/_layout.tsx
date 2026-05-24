@@ -1,6 +1,6 @@
 import { Slot, usePathname, useRouter, useRootNavigationState } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { View, StyleSheet, TouchableOpacity, Text, ImageBackground, StatusBar as RNStatusBar } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Text, ImageBackground, StatusBar as RNStatusBar, Keyboard, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Home, MessageCircle, Image as ImageIcon, Settings, Bookmark, BookOpen } from 'lucide-react-native';
 import { Mosque } from '../components/IslamicElements';
@@ -25,6 +25,13 @@ function AppLayout() {
 
   // Controls our RN splash overlay (independent of native splash)
   const [showSplash, setShowSplash] = useState(true);
+  const [isKeyboardVisible, setKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', () => setKeyboardVisible(true));
+    const hideSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide', () => setKeyboardVisible(false));
+    return () => { showSub.remove(); hideSub.remove(); };
+  }, []);
 
   useEffect(() => {
     if (!rootNavigationState?.key) return;
@@ -38,7 +45,7 @@ function AppLayout() {
     }
   }, [langLoaded, userLoaded, hasCompletedOnboarding, pathname, rootNavigationState?.key]);
 
-  const isNavigationVisible = pathname !== '/onboarding' && pathname !== '/auth' && langLoaded && userLoaded;
+  const isNavigationVisible = pathname !== '/onboarding' && pathname !== '/auth' && langLoaded && userLoaded && !isKeyboardVisible;
 
   // RN full-screen splash overlay — shows until showSplash is false
   const navItems = [
