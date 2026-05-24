@@ -22,6 +22,8 @@ import { BlurView } from 'expo-blur';
 import Paywall from '../components/Paywall';
 import { useAppAlert } from '../components/AppAlert';
 
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 export default function Chat() {
   const [messages, setMessages] = useState<Array<{ role: string, content: string, parsed?: ParsedContent }>>([]);
   const [input, setInput] = useState('');
@@ -33,6 +35,7 @@ export default function Chat() {
   const { showAlert, alertElement } = useAppAlert();
   const scrollViewRef = useRef<ScrollView>(null);
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     const showSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', () => setKeyboardVisible(true));
@@ -236,11 +239,11 @@ export default function Chat() {
     <KeyboardAvoidingView
       style={[styles.container, { backgroundColor: colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top : 0}
     >
       <IslamicPattern color={isDark ? 'rgba(247, 245, 239, 0.03)' : 'rgba(15, 61, 46, 0.04)'} />
       {alertElement}
-      <View style={[styles.header, { borderBottomColor: colors.border }]}>
-        <Text style={[styles.headerTitle, { color: colors.primary }]}>{t('nav.reflect')}</Text>
+      <View style={[styles.header, { borderBottomColor: colors.border }]}><Text style={[styles.headerTitle, { color: colors.primary }]}>{t('nav.reflect')}</Text>
       </View>
 
       <ScrollView
