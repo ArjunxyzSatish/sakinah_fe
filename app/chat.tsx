@@ -1,9 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Keyboard } from 'react-native';
 import { Send, Trash2 } from 'lucide-react-native';
 import { streamReflection, saveChat } from '../services/openai';
 import { parseStreamedContent, ParsedContent } from '../utils/parser';
-import { Keyboard } from 'react-native';
 
 const PROMPTS = [
   { emoji: '🌿', text: "I'm feeling overwhelmed. How can Islam help me find peace?" },
@@ -36,6 +35,9 @@ export default function Chat() {
   const scrollViewRef = useRef<ScrollView>(null);
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
   const insets = useSafeAreaInsets();
+  const inputBottomPadding = isKeyboardVisible
+    ? Math.max(insets.bottom, 16)
+    : Math.max(insets.bottom + 84, Platform.OS === 'ios' ? 120 : 100);
 
   useEffect(() => {
     const showSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', () => setKeyboardVisible(true));
@@ -238,7 +240,7 @@ export default function Chat() {
   return (
     <KeyboardAvoidingView
       style={[styles.container, { backgroundColor: colors.background }]}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top : 0}
     >
       <IslamicPattern color={isDark ? 'rgba(247, 245, 239, 0.03)' : 'rgba(15, 61, 46, 0.04)'} />
@@ -248,7 +250,9 @@ export default function Chat() {
 
       <ScrollView
         ref={scrollViewRef}
+        style={styles.messages}
         contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
         onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
       >
         {historyLoading ? (
@@ -312,7 +316,7 @@ export default function Chat() {
         { 
           borderTopColor: colors.border, 
           backgroundColor: colors.inputBg,
-          paddingBottom: isKeyboardVisible ? 16 : (Platform.OS === 'ios' ? 120 : 100)
+          paddingBottom: inputBottomPadding
         }
       ]}>
         {messages.length > 0 && (
@@ -371,6 +375,9 @@ export default function Chat() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  messages: {
+    flex: 1,
+  },
   header: {
     paddingVertical: 16,
     paddingTop: 32,
