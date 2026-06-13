@@ -118,17 +118,17 @@ export default function Onboarding() {
   // Step 1: Language Selection
   if (step === 1) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background, padding: 24 }]}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
         <IslamicPattern color={isDark ? 'rgba(247, 245, 239, 0.03)' : 'rgba(15, 61, 46, 0.04)'} />
         <ScrollView contentContainerStyle={styles.langScrollContent} showsVerticalScrollIndicator={false}>
           <View style={styles.contentContainer}>
             <Crescent size={64} color={colors.primary} style={{ marginBottom: 12 }} />
-            <Text style={[styles.brand, { color: colors.text }]}>sakinah</Text>
+            <Text style={[styles.brand, { color: colors.text }]}>MuslimSpace</Text>
             <Text style={[styles.subtitle, { color: colors.text }]}>Find quiet in the Qur'an</Text>
             <View style={styles.langContainer}>
               <TouchableOpacity style={[styles.langBtn, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={() => selectLanguage('en')}>
                 <Text style={[styles.langTitle, { color: colors.primary }]}>English</Text>
-                <Text style={[styles.langDesc, { color: colors.text, opacity: 0.6 }]}>Reflect in English</Text>
+                <Text style={[styles.langDesc, { color: colors.text, opacity: 0.6 }]}>Chat in English</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.langBtn, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={() => selectLanguage('ar')}>
                 <Text style={[styles.langTitle, { color: colors.primary, fontFamily: 'serif' }]}>العربية</Text>
@@ -193,13 +193,13 @@ export default function Onboarding() {
         <TouchableOpacity style={styles.backBtnAbs} onPress={() => setStep(step - 1)}>
           <ChevronLeft size={28} color={colors.primary} />
         </TouchableOpacity>
-        <View style={styles.scrollContent}>
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           <View style={{ alignItems: 'center', marginBottom: 24, marginTop: 60 }}>
             <Mosque size={64} color={colors.primary} />
           </View>
           <Text style={[styles.title, { color: colors.primary }]}>Prayer Times</Text>
           <Text style={[styles.description, { color: colors.text }]}>
-            Sakinah automatically tracks all 5 daily prayers using precise astronomical calculations — no setup needed.
+            MuslimSpace automatically tracks all 5 daily prayers using precise astronomical calculations — no setup needed.
           </Text>
 
           <View style={styles.prayerNameList}>
@@ -217,8 +217,8 @@ export default function Onboarding() {
               Allow notifications to receive a gentle reminder before each prayer begins.
             </Text>
           </View>
-        </View>
-        <View style={styles.footer}>
+        </ScrollView>
+        <View style={[styles.footer, { backgroundColor: colors.background }]}>
           <TouchableOpacity style={[styles.continueBtn, { backgroundColor: colors.primary }]} onPress={async () => {
             await requestNotifications();
             nextStep();
@@ -277,7 +277,7 @@ export default function Onboarding() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   contentContainer: { alignItems: 'center', gap: 40 },
-  langScrollContent: { paddingTop: 80, paddingBottom: 60 },
+  langScrollContent: { paddingTop: 80, paddingBottom: 60, paddingHorizontal: 24 },
   brand: { fontSize: 24, letterSpacing: 8, textTransform: 'uppercase' },
   subtitle: { fontFamily: 'Georgia', fontStyle: 'italic', fontSize: 18, opacity: 0.7 },
   langContainer: { width: '100%', gap: 12, marginTop: 20 },
@@ -292,7 +292,7 @@ const styles = StyleSheet.create({
   moreLabel: { fontSize: 12, fontWeight: '600', letterSpacing: 1 },
   header: { paddingVertical: 16, paddingTop: 32, alignItems: 'center', borderBottomWidth: 1 },
   headerTitle: { fontSize: 10, fontWeight: 'bold', letterSpacing: 2, textTransform: 'uppercase' },
-  scrollContent: { padding: 24, paddingBottom: 120 },
+  scrollContent: { padding: 24, paddingBottom: 200 },
   title: { fontSize: 28, fontFamily: 'Georgia', marginBottom: 16, textAlign: 'center' },
   description: { fontSize: 16, lineHeight: 24, textAlign: 'center', opacity: 0.7, marginBottom: 40 },
   stepHeader: { alignItems: 'center', marginTop: 60 },

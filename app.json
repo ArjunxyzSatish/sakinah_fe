@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Sakinah",
-    "slug": "sakinav2",
+    "name": "MuslimSpace",
+    "slug": "sakinah",
     "scheme": "sakinah",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -9,26 +9,35 @@
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "androidStatusBar": {
-      "backgroundColor": "#0F3D2E",
+      "backgroundColor": "#004431",
       "barStyle": "light-content"
     },
     "splash": {
       "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#F7F5EF"
+      "resizeMode": "cover",
+      "backgroundColor": "#004431"
     },
     "ios": {
       "supportsTablet": true
     },
     "android": {
+      "softwareKeyboardLayoutMode": "pan",
+      "splash": {
+        "image": "./assets/transparent.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#004431"
+      },
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#F7F5EF"
       },
-      "package": "com.faithflow.sakinah",
+      "package": "com.faithflow.sakinahapp",
       "permissions": [
         "android.permission.RECEIVE_BOOT_COMPLETED",
         "android.permission.SCHEDULE_EXACT_ALARM"
+      ],
+      "blockedPermissions": [
+        "android.permission.ACTIVITY_RECOGNITION"
       ]
     },
     "web": {
@@ -36,18 +45,35 @@
     },
     "plugins": [
       "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "resizeMode": "cover",
+          "backgroundColor": "#004431"
+        }
+      ],
       "expo-localization",
       "@react-native-community/datetimepicker",
-      "expo-notifications"
+      "expo-notifications",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "compileSdkVersion": 35,
+            "targetSdkVersion": 35
+          }
+        }
+      ]
     ],
     "extra": {
       "router": {
         "origin": false
       },
       "eas": {
-        "projectId": "8dd83f64-7224-4e49-abac-c44a8929d898"
+        "projectId": "deffa91f-d2e8-4a8a-af20-867dbe7b98e4"
       }
     },
-    "owner": "arjun.satish"
+    "owner": "faithflowtech"
   }
 }

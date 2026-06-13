@@ -1,6 +1,6 @@
 import { Slot, usePathname, useRouter, useRootNavigationState } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Text, ImageBackground, StatusBar as RNStatusBar, Keyboard, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Home, MessageCircle, Image as ImageIcon, Settings, Bookmark, BookOpen } from 'lucide-react-native';
 import { Mosque } from '../components/IslamicElements';
@@ -9,7 +9,7 @@ import { LanguageProvider, useLanguage } from '../context/LanguageContext';
 import { UserProvider, useUser } from '../context/UserContext';
 import { ThemeProvider, useTheme } from '../context/ThemeContext';
 import { VerseProvider } from '../context/VerseContext';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import * as SplashScreen from 'expo-splash-screen';
 
 try { SplashScreen.preventAutoHideAsync(); } catch (e) { console.warn('SplashScreen.preventAutoHideAsync failed:', e); }
@@ -23,42 +23,34 @@ function AppLayout() {
   const { hasCompletedOnboarding, isLoaded: userLoaded } = useUser();
   const { colors, isDark } = useTheme();
 
+  // Controls our RN splash overlay (independent of native splash)
+  const [showSplash, setShowSplash] = useState(true);
+  const [isKeyboardVisible, setKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', () => setKeyboardVisible(true));
+    const hideSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide', () => setKeyboardVisible(false));
+    return () => { showSub.remove(); hideSub.remove(); };
+  }, []);
+
   useEffect(() => {
     if (!rootNavigationState?.key) return;
-    
     if (langLoaded && userLoaded) {
       if (!hasCompletedOnboarding && pathname !== '/onboarding') {
         router.replace('/onboarding');
       }
-      SplashScreen.hideAsync().catch(() => {});
+      SplashScreen.hideAsync()
+        .catch(() => {})
+        .finally(() => setShowSplash(false));
     }
   }, [langLoaded, userLoaded, hasCompletedOnboarding, pathname, rootNavigationState?.key]);
 
-  // Safety: force-hide splash screen after 8s no matter what
-  // Prevents the app from being permanently stuck on a blank/splash screen
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      SplashScreen.hideAsync().catch(() => {});
-    }, 8000);
-    return () => clearTimeout(timer);
-  }, []);
+  const isNavigationVisible = pathname !== '/onboarding' && pathname !== '/auth' && langLoaded && userLoaded && !isKeyboardVisible;
 
-  const isNavigationVisible = pathname !== '/onboarding' && pathname !== '/auth' && langLoaded && userLoaded;
-
-  // Show a branded loading screen while providers initialize
-  // This prevents the blank white screen when SplashScreen.preventAutoHideAsync fails
-  if (!langLoaded || !userLoaded) {
-    return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#0F3D2E', justifyContent: 'center', alignItems: 'center' }}>
-        <Text style={{ color: '#D4AF37', fontSize: 32, fontWeight: 'bold', letterSpacing: 2 }}>Sakinah</Text>
-        <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, marginTop: 8 }}>Loading...</Text>
-      </SafeAreaView>
-    );
-  }
-
+  // RN full-screen splash overlay — shows until showSplash is false
   const navItems = [
     { path: '/', icon: Home, label: t('nav.home'), custom: null },
-    { path: '/chat', icon: MessageCircle, label: t('nav.reflect'), custom: null },
+    { path: '/chat', icon: MessageCircle, label: t('nav.chat'), custom: null },
     { path: '/prayer', icon: null, label: t('nav.prayer'), custom: 'mosque' },
     { path: '/quran', icon: BookOpen, label: t('nav.quran'), custom: null },
     { path: '/saved', icon: Bookmark, label: t('nav.saved'), custom: null },
@@ -89,13 +81,13 @@ function AppLayout() {
                       size={24}
                       color={isActive ? colors.primary : (isDark ? 'rgba(247, 245, 239, 0.4)' : 'rgba(26, 26, 26, 0.4)')}
                     />
-                  ) : (
+                  ) : Icon ? (
                     <Icon
                       strokeWidth={isActive ? 2.5 : 1.5}
                       size={24}
                       color={isActive ? colors.primary : (isDark ? 'rgba(247, 245, 239, 0.4)' : 'rgba(26, 26, 26, 0.4)')}
                     />
-                  )}
+                  ) : null}
                   <Text style={[
                     styles.navLabel,
                     { color: isActive ? colors.primary : (isDark ? 'rgba(247, 245, 239, 0.4)' : 'rgba(26, 26, 26, 0.4)') }
@@ -106,6 +98,16 @@ function AppLayout() {
               );
             })}
           </View>
+        </View>
+      )}
+
+      {(showSplash || !langLoaded || !userLoaded) && (
+        <View style={[StyleSheet.absoluteFillObject, { zIndex: 9999 }]}>
+          <ImageBackground
+            source={require('../assets/splash-icon.png')}
+            style={{ flex: 1 }}
+            resizeMode="cover"
+          />
         </View>
       )}
     </SafeAreaView>
@@ -129,7 +131,7 @@ class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasErr
     if (this.state.hasError) {
       return (
         <SafeAreaView style={{ flex: 1, backgroundColor: '#0F3D2E', justifyContent: 'center', padding: 32 }}>
-          <Text style={{ color: '#fff', fontSize: 22, fontWeight: 'bold', marginBottom: 16 }}>Sakinah crashed</Text>
+          <Text style={{ color: '#fff', fontSize: 22, fontWeight: 'bold', marginBottom: 16 }}>MuslimSpace crashed</Text>
           <Text style={{ color: '#faa', fontSize: 14, marginBottom: 12 }}>{String(this.state.error)}</Text>
           <Text style={{ color: '#ccc', fontSize: 11 }}>{this.state.error?.stack?.slice(0, 800)}</Text>
         </SafeAreaView>

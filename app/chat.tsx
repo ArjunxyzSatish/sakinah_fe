@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Keyboard } from 'react-native';
 import { Send, Trash2 } from 'lucide-react-native';
-import { streamReflection, saveChat } from '../services/openai';
+import { streamChat, saveChat } from '../services/openai';
 import { parseStreamedContent, ParsedContent } from '../utils/parser';
 
 const PROMPTS = [
@@ -21,6 +21,8 @@ import { BlurView } from 'expo-blur';
 import Paywall from '../components/Paywall';
 import { useAppAlert } from '../components/AppAlert';
 
+
+
 export default function Chat() {
   const [messages, setMessages] = useState<Array<{ role: string, content: string, parsed?: ParsedContent }>>([]);
   const [input, setInput] = useState('');
@@ -31,6 +33,18 @@ export default function Chat() {
   const [visuallyClear, setVisuallyClear] = useState(false);
   const { showAlert, alertElement } = useAppAlert();
   const scrollViewRef = useRef<ScrollView>(null);
+  const [isKeyboardVisible, setKeyboardVisible] = useState(false);
+  // When keyboard is hidden, pad enough to clear the floating navbar (bottom: 24 + ~72px height + 8px gap).
+  // When keyboard is visible, KAV handles the lift; we just need a small gap.
+  const inputBottomPadding = isKeyboardVisible ? 16 : 104;
+
+  useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const showSub = Keyboard.addListener(showEvent, () => setKeyboardVisible(true));
+    const hideSub = Keyboard.addListener(hideEvent, () => setKeyboardVisible(false));
+    return () => { showSub.remove(); hideSub.remove(); };
+  }, []);
 
   const params = useLocalSearchParams();
   const router = useRouter();
@@ -91,11 +105,11 @@ export default function Chat() {
       setShowLimitOverlay(true);
       return;
     }
-    // Logged-in free limit
-    if (user && !isSubscribed && llmCallsRemaining <= 0) {
-      setShowPaywall(true);
-      return;
-    }
+    // Logged-in free limit (Temporarily disabled for all logged-in users)
+    // if (user && !isSubscribed && llmCallsRemaining <= 0) {
+    //   setShowPaywall(true);
+    //   return;
+    // }
 
     const userMessage = { role: 'user', content: messageText };
     setMessages(prev => [...prev, userMessage]);
@@ -103,7 +117,7 @@ export default function Chat() {
     setIsLoading(true);
 
     try {
-      const generator = streamReflection(messageText, language, session?.access_token || null);
+      const generator = streamChat(messageText, language, session?.access_token || null);
       let fullResponse = '';
 
       setMessages(prev => [...prev, { role: 'assistant', content: '', parsed: parseStreamedContent('') }]);
@@ -227,31 +241,33 @@ export default function Chat() {
   return (
     <KeyboardAvoidingView
       style={[styles.container, { backgroundColor: colors.background }]}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior="padding"
+      keyboardVerticalOffset={0}
     >
       <IslamicPattern color={isDark ? 'rgba(247, 245, 239, 0.03)' : 'rgba(15, 61, 46, 0.04)'} />
       {alertElement}
-      <View style={[styles.header, { borderBottomColor: colors.border }]}>
-        <Text style={[styles.headerTitle, { color: colors.primary }]}>{t('nav.reflect')}</Text>
+      <View style={[styles.header, { borderBottomColor: colors.border }]}><Text style={[styles.headerTitle, { color: colors.primary }]}>{t('nav.chat')}</Text>
       </View>
 
       <ScrollView
         ref={scrollViewRef}
+        style={styles.messages}
         contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
         onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
       >
         {historyLoading ? (
           <View style={[styles.emptyState, { paddingTop: 80 }]}>
             <ActivityIndicator color={colors.primary} size="large" />
             <Text style={[styles.emptyStateSubtitle, { color: colors.text, marginTop: 16 }]}>
-              Loading your reflections...
+              Loading your chats...
             </Text>
           </View>
         ) : messages.length === 0 && (
           <View style={styles.emptyState}>
             <Mosque size={72} color={colors.primary} style={{ opacity: 0.12, marginBottom: 20 }} />
             <Text style={[styles.emptyStateTitle, { color: colors.primary }]}>
-              {visuallyClear ? 'A fresh start. ✦' : 'What\'s on your heart?'}
+              {visuallyClear ? 'A fresh start. ✦' : 'What\'s on your mind?'}
             </Text>
             <Text style={[styles.emptyStateSubtitle, { color: colors.text }]}>
               {visuallyClear
@@ -296,7 +312,14 @@ export default function Chat() {
         )}
       </ScrollView>
 
-      <View style={[styles.inputContainer, { borderTopColor: colors.border, backgroundColor: colors.inputBg }]}>
+      <View style={[
+        styles.inputContainer,
+        {
+          borderTopColor: colors.border,
+          backgroundColor: colors.inputBg,
+          paddingBottom: inputBottomPadding,
+        }
+      ]}>
         {messages.length > 0 && (
           <TouchableOpacity
             style={[styles.sendBtn, { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }]}
@@ -327,9 +350,9 @@ export default function Chat() {
         <View style={[StyleSheet.absoluteFill, { zIndex: 100, justifyContent: 'center', alignItems: 'center', padding: 24, backgroundColor: isDark ? 'rgba(15, 61, 46, 0.7)' : 'rgba(247, 245, 239, 0.7)' }]}>
           <BlurView intensity={90} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
           <View style={[styles.limitCard, { backgroundColor: colors.background, borderColor: colors.primary }]}>
-            <Text style={[styles.limitTitle, { color: colors.primary }]}>Reflection Limit Reached</Text>
+            <Text style={[styles.limitTitle, { color: colors.primary }]}>Chat Limit Reached</Text>
             <Text style={[styles.limitDesc, { color: colors.text }]}>
-              Sign up to continue your daily reflections without limits, or wait until tomorrow to try again.
+              Sign up to continue chatting without limits, or wait until tomorrow to try again.
             </Text>
             <View style={styles.limitActions}>
               <TouchableOpacity style={styles.limitCancelBtn} onPress={() => setShowLimitOverlay(false)}>
@@ -346,13 +369,16 @@ export default function Chat() {
         </View>
       )}
 
-      <Paywall visible={showPaywall} onDismiss={() => setShowPaywall(false)} reason="reflection" />
+      <Paywall visible={showPaywall} onDismiss={() => setShowPaywall(false)} reason="chat" />
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  messages: {
+    flex: 1,
+  },
   header: {
     paddingVertical: 16,
     paddingTop: 32,
@@ -531,7 +557,6 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     gap: 12,
     padding: 16,
-    paddingBottom: Platform.OS === 'ios' ? 120 : 100, // accommodate nav block
     borderTopWidth: 1,
   },
   input: {

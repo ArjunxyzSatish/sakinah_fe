@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Linking, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Linking, Platform, Alert } from 'react-native';
 import { Magnetometer } from 'expo-sensors';
 import * as Location from 'expo-location';
 import * as Haptics from 'expo-haptics';
@@ -9,6 +9,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { useUser } from '../context/UserContext';
 import { IslamicPattern, Mosque } from '../components/IslamicElements';
 import { QiblaCompass } from '../components/QiblaCompass';
+import { useAppAlert } from '../components/AppAlert';
 import { Compass, Clock, Bell, MapPin, Settings, CheckCircle2, Circle, Check } from 'lucide-react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming, withSpring } from 'react-native-reanimated';
 
@@ -17,11 +18,11 @@ import { getTodayPrayerTimes, getFallbackCoordinates, PrayerData } from '../util
 const { width } = Dimensions.get('window');
 
 const PRAYER_ARABIC: Record<string, string> = {
-  Fajr:    'الفجر',
-  Dhuhr:   'الظهر',
-  Asr:     'العصر',
+  Fajr: 'الفجر',
+  Dhuhr: 'الظهر',
+  Asr: 'العصر',
   Maghrib: 'المغرب',
-  Isha:    'العشاء',
+  Isha: 'العشاء',
 };
 
 export default function PrayerScreen() {
@@ -29,6 +30,7 @@ export default function PrayerScreen() {
   const { t, language } = useLanguage();
   const { prayerEnabled, completedPrayers, togglePrayerCompleted, togglePrayer } = useUser();
   const router = useRouter();
+  const { showAlert, alertElement } = useAppAlert();
 
   const [heading, setHeading] = useState(0);
   const [qiblaAngle, setQiblaAngle] = useState(0);
@@ -170,10 +172,10 @@ export default function PrayerScreen() {
 
   useEffect(() => {
     if (qiblaAngle === 0 && heading === 0) return;
-    
+
     const diff = Math.abs(qiblaAngle - heading);
     const isFacing = diff < 5 || diff > 355;
-    
+
     if (isFacing && !wasFacingQibla.current) {
       wasFacingQibla.current = true;
       glowOpacity.value = withSpring(1);
@@ -226,7 +228,7 @@ export default function PrayerScreen() {
       const now = new Date().getTime();
       let next = prayerData.find(p => p.time.getTime() > now);
       if (!next) next = prayerData[0]; // Next is Fajr tomorrow
-      
+
       setNextPrayer(next);
 
       let diff = next.time.getTime() - now;
@@ -349,7 +351,7 @@ export default function PrayerScreen() {
                 </View>
                 <View style={{ alignItems: 'flex-end' }}>
                   <Text style={[styles.countdownSub, { color: colors.background, opacity: 0.8 }]}>Starts in</Text>
-                  <Text style={[styles.countdownTime, { color: colors.background }]}>-{timeRemaining}</Text>
+                  <Text style={[styles.countdownTime, { color: colors.background }]}>{timeRemaining}</Text>
                 </View>
               </View>
             )}
@@ -367,8 +369,8 @@ export default function PrayerScreen() {
                 const isCompleted = completedPrayers[prayerKey];
 
                 return (
-                  <TouchableOpacity 
-                    key={i} 
+                  <TouchableOpacity
+                    key={i}
                     onPress={() => {
                       if (canMark) {
                         togglePrayerCompleted(prayerKey);
@@ -376,19 +378,21 @@ export default function PrayerScreen() {
                     }}
                     activeOpacity={canMark ? 0.8 : 1}
                     style={[
-                      styles.timeCard, 
+                      styles.timeCard,
                       { backgroundColor: isNext ? colors.primary + '10' : colors.card, borderColor: isNext ? colors.primary : colors.cardBorder },
                       isNext && { borderWidth: 2, transform: [{ scale: 1.02 }] },
                       isPast && !isNext && { opacity: 0.6 }
                     ]}
                   >
                     <View style={styles.timeInfo}>
-                      <Text style={[styles.timeLabel, { color: isNext ? colors.primary : colors.text, fontSize: 24, fontWeight: '900' }]}>
-                        {prayer.name}
-                      </Text>
-                      <Text style={{ color: isNext ? colors.primary : colors.text, opacity: isNext ? 0.55 : 0.35, fontSize: 13, fontFamily: 'serif', marginTop: 1 }}>
-                        {PRAYER_ARABIC[prayer.name]}
-                      </Text>
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingRight: 16 }}>
+                        <Text style={[styles.timeLabel, { color: isNext ? colors.primary : colors.text, fontSize: 24, fontWeight: '900', marginBottom: 0 }]}>
+                          {prayer.name}
+                        </Text>
+                        <Text style={{ color: isNext ? colors.primary : colors.text, opacity: isNext ? 0.8 : 0.5, fontSize: 28, fontFamily: 'serif' }}>
+                          {PRAYER_ARABIC[prayer.name]}
+                        </Text>
+                      </View>
                       <View style={{ flexDirection: 'row', alignItems: 'flex-end', marginTop: 6, gap: 3 }}>
                         <Text style={[styles.timeValue, { color: isNext ? colors.primary : colors.text, opacity: isNext ? 1 : 0.7, fontSize: 20, fontWeight: '700' }]}>
                           {prayer.timeStr.replace(/\s?(AM|PM)$/i, '')}
@@ -398,7 +402,7 @@ export default function PrayerScreen() {
                         </Text>
                       </View>
                     </View>
-                    
+
                     <View style={styles.checkboxBtn}>
                       {isCompleted ? (
                         <CheckCircle2 size={32} color={colors.primary} />
@@ -428,6 +432,7 @@ export default function PrayerScreen() {
         )}
       </ScrollView>
 
+      {alertElement}
     </View>
   );
 }
@@ -464,13 +469,13 @@ const styles = StyleSheet.create({
   disabledBannerText: { fontSize: 14, fontWeight: '500', opacity: 0.4 },
   enableSettingsBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 20, paddingVertical: 12, borderRadius: 24, borderWidth: 1, marginTop: 4 },
   enableSettingsBtnText: { fontSize: 13, fontWeight: '600' },
-  
+
   scheduleHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, paddingLeft: 8 },
   scheduleHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   sectionSubtitle: { fontSize: 12, fontWeight: 'bold', letterSpacing: 1, textTransform: 'uppercase' },
   completedBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16 },
   completedBadgeText: { fontSize: 11, fontWeight: 'bold' },
-  
+
   countdownCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 20, borderRadius: 24, marginBottom: 16, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 4 },
   countdownSub: { fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 },
   countdownLabel: { fontSize: 20, fontWeight: '900' },

@@ -1,0 +1,22 @@
+C:\Users\arjun\Desktop\Projects\Sakinah\sakinah_fe\node_modules\@expo\cli\build\src\utils\errors.js:123
+    throw error;
+    ^
+
+Error: UNKNOWN: unknown error, lstat 'C:\Users\arjun\Desktop\Projects\Sakinah\sakinah_fe\.eas-inspect-archive\android\app\src\main\res\values-night\?\C:\Users\arjun\Desktop\Projects\Sakinah\sakinah_fe\.eas-inspect-archive\android\app\src\main\res\values-night'
+    at Object.lstat (node:internal/fs/promises:1027:18)
+    at FallbackWatcher._processChange (C:\Users\arjun\Desktop\Projects\Sakinah\sakinah_fe\node_modules\metro-file-map\src\watchers\FallbackWatcher.js:171:20)
+Emitted 'error' event at:
+    at FallbackWatcher.emitError (C:\Users\arjun\Desktop\Projects\Sakinah\sakinah_fe\node_modules\metro-file-map\src\watchers\AbstractWatcher.js:70:19)
+    at C:\Users\arjun\Desktop\Projects\Sakinah\sakinah_fe\node_modules\metro-file-map\src\watchers\FallbackWatcher.js:162:14 {
+  errno: -4094,
+  code: 'UNKNOWN',
+  syscall: 'lstat',
+  path: 'C:\\Users\\arjun\\Desktop\\Projects\\Sakinah\\sakinah_fe\\.eas-inspect-archive\\android\\app\\src\\main\\res\\values-night\\?\\C:\\Users\\arjun\\Desktop\\Projects\\Sakinah\\sakinah_fe\\.eas-inspect-archive\\android\\app\\src\\main\\res\\values-night'
+}
+
+Node.js v22.14.0
+npm notice
+npm notice New major version of npm available! 10.9.2 -> 11.14.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.14.0
+npm notice To update run: npm install -g npm@11.14.0
+npm notice

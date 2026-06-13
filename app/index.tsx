@@ -34,10 +34,11 @@ export default function Home() {
       setShowLimitOverlay(true);
       return;
     }
-    if (user && !isSubscribed && versesRemaining <= 0) {
-      setShowPaywall(true);
-      return;
-    }
+    // Logged-in free limit (Temporarily disabled for all logged-in users)
+    // if (user && !isSubscribed && versesRemaining <= 0) {
+    //   setShowPaywall(true);
+    //   return;
+    // }
 
     setRefreshing(true);
     try {
@@ -140,7 +141,7 @@ export default function Home() {
                 params: { initialMessage: `I want to reflect on today's verse: "${dailyVerse.translation}" (${dailyVerse.reference})` }
               })}
             >
-              <Text style={[styles.reflectBtnText, { color: colors.background }]}>{t('home.reflect')}</Text>
+              <Text style={[styles.reflectBtnText, { color: colors.background }]}>{t('home.chat')}</Text>
             </TouchableOpacity>
 
             <View style={{ flexDirection: 'row', gap: 12 }}>

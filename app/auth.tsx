@@ -11,6 +11,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { IslamicPattern, Crescent } from '../components/IslamicElements';
 import { ChevronLeft, Mail, Lock, User, Chrome } from 'lucide-react-native';
 import { useAppAlert } from '../components/AppAlert';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 // Google Sign-in is imported dynamically to prevent crashes in Expo Go
 
 export default function AuthScreen() {
@@ -27,6 +28,7 @@ export default function AuthScreen() {
   const { colors, isDark } = useTheme();
   const { t } = useLanguage();
   const { showAlert, alertElement } = useAppAlert();
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     // Handle OAuth callback if app was opened/resumed via deep link with tokens
@@ -70,8 +72,9 @@ export default function AuthScreen() {
           password,
         });
         if (error) throw error;
+        router.replace('/');
       } else {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -82,9 +85,14 @@ export default function AuthScreen() {
           },
         });
         if (error) throw error;
-        showAlert('Check Your Email', 'A confirmation link has been sent to your email address.', undefined, '📬');
+        
+        if (data.session) {
+          router.replace('/');
+        } else {
+          showAlert('Check Your Email', 'A confirmation link has been sent to your email address.', undefined, '📬');
+          setIsLogin(true);
+        }
       }
-      router.replace('/');
     } catch (error: any) {
       showAlert('Sign-in Error', error.message, undefined, '⚠️');
     } finally {
@@ -156,6 +164,7 @@ export default function AuthScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top : 0}
       style={[styles.container, { backgroundColor: colors.background }]}
     >
       {alertElement}
@@ -169,11 +178,11 @@ export default function AuthScreen() {
         <View style={styles.header}>
           <Crescent size={60} color={colors.primary} />
           <Text style={[styles.title, { color: colors.text }]}>
-            {isLogin ? 'Welcome Back' : 'Join Sakinah'}
+            {isLogin ? 'Welcome Back' : 'Join MuslimSpace'}
           </Text>
           <Text style={[styles.subtitle, { color: colors.text, opacity: 0.6 }]}>
             {isLogin
-              ? 'Sign in to sync your reflections and progress'
+              ? 'Sign in to sync your chats and progress'
               : 'Create an account to save your spiritual journey'}
           </Text>
         </View>
