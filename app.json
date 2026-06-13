@@ -21,6 +21,7 @@
       "supportsTablet": true
     },
     "android": {
+      "softwareKeyboardLayoutMode": "pan",
       "splash": {
         "image": "./assets/transparent.png",
         "resizeMode": "contain",

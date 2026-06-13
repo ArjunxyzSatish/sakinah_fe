@@ -50,7 +50,7 @@ function AppLayout() {
   // RN full-screen splash overlay — shows until showSplash is false
   const navItems = [
     { path: '/', icon: Home, label: t('nav.home'), custom: null },
-    { path: '/chat', icon: MessageCircle, label: t('nav.reflect'), custom: null },
+    { path: '/chat', icon: MessageCircle, label: t('nav.chat'), custom: null },
     { path: '/prayer', icon: null, label: t('nav.prayer'), custom: 'mosque' },
     { path: '/quran', icon: BookOpen, label: t('nav.quran'), custom: null },
     { path: '/saved', icon: Bookmark, label: t('nav.saved'), custom: null },
