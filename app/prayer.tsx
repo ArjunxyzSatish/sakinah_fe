@@ -360,22 +360,16 @@ export default function PrayerScreen() {
               {prayerData.map((prayer, i) => {
                 const now = new Date().getTime();
                 const isPast = prayer.time.getTime() < now;
-                // A prayer is 'active' right now if it has started but the next one hasn't
-                const isActive = isPast && nextPrayer?.name !== prayer.name;
                 const isNext = nextPrayer?.name === prayer.name;
-                // User can mark a prayer done if it has started (isPast) OR it is the current active window (isActive)
-                const canMark = isPast || isActive;
+                const canMark = isPast;
                 const prayerKey = `${todayStr}-${prayer.name}`;
                 const isCompleted = completedPrayers[prayerKey];
 
                 return (
                   <TouchableOpacity
                     key={i}
-                    onPress={() => {
-                      if (canMark) {
-                        togglePrayerCompleted(prayerKey);
-                      }
-                    }}
+                    onPress={() => togglePrayerCompleted(prayerKey)}
+                    disabled={!canMark}
                     activeOpacity={canMark ? 0.8 : 1}
                     style={[
                       styles.timeCard,
