@@ -128,7 +128,7 @@ export default function Onboarding() {
             <View style={styles.langContainer}>
               <TouchableOpacity style={[styles.langBtn, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={() => selectLanguage('en')}>
                 <Text style={[styles.langTitle, { color: colors.primary }]}>English</Text>
-                <Text style={[styles.langDesc, { color: colors.text, opacity: 0.6 }]}>Reflect in English</Text>
+                <Text style={[styles.langDesc, { color: colors.text, opacity: 0.6 }]}>Chat in English</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.langBtn, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={() => selectLanguage('ar')}>
                 <Text style={[styles.langTitle, { color: colors.primary, fontFamily: 'serif' }]}>العربية</Text>
@@ -218,7 +218,7 @@ export default function Onboarding() {
             </Text>
           </View>
         </ScrollView>
-        <View style={styles.footer}>
+        <View style={[styles.footer, { backgroundColor: colors.background }]}>
           <TouchableOpacity style={[styles.continueBtn, { backgroundColor: colors.primary }]} onPress={async () => {
             await requestNotifications();
             nextStep();
@@ -292,7 +292,7 @@ const styles = StyleSheet.create({
   moreLabel: { fontSize: 12, fontWeight: '600', letterSpacing: 1 },
   header: { paddingVertical: 16, paddingTop: 32, alignItems: 'center', borderBottomWidth: 1 },
   headerTitle: { fontSize: 10, fontWeight: 'bold', letterSpacing: 2, textTransform: 'uppercase' },
-  scrollContent: { padding: 24, paddingBottom: 120 },
+  scrollContent: { padding: 24, paddingBottom: 200 },
   title: { fontSize: 28, fontFamily: 'Georgia', marginBottom: 16, textAlign: 'center' },
   description: { fontSize: 16, lineHeight: 24, textAlign: 'center', opacity: 0.7, marginBottom: 40 },
   stepHeader: { alignItems: 'center', marginTop: 60 },

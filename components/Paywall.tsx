@@ -81,10 +81,10 @@ function getRegionalPricing(regionCode: string | null | undefined): RegionalPric
 interface PaywallProps {
   visible: boolean;
   onDismiss: () => void;
-  reason?: 'reflection' | 'verse';
+  reason?: 'chat' | 'verse';
 }
 
-export default function Paywall({ visible, onDismiss, reason = 'reflection' }: PaywallProps) {
+export default function Paywall({ visible, onDismiss, reason = 'chat' }: PaywallProps) {
   const { colors, isDark } = useTheme();
   const { session, markSubscribed } = useUser();
   const [selectedPlan, setSelectedPlan] = useState<'weekly' | 'monthly'>('monthly');
@@ -205,15 +205,15 @@ export default function Paywall({ visible, onDismiss, reason = 'reflection' }: P
   };
 
   const features = [
-    { icon: Zap, text: 'Unlimited daily reflections' },
+    { icon: Zap, text: 'Unlimited daily chats' },
     { icon: BookOpen, text: 'Unlimited verse discoveries' },
     { icon: Sparkles, text: 'Deeper personalised guidance' },
     { icon: Star, text: 'Priority spiritual support' },
   ];
 
   const headings = {
-    reflection: {
-      title: "Your reflections\nhave touched a limit",
+    chat: {
+      title: "You've reached\nyour chat limit",
       subtitle: "You've journeyed deeply today. Continue your spiritual growth without pause.",
     },
     verse: {

@@ -182,7 +182,7 @@ export default function AuthScreen() {
           </Text>
           <Text style={[styles.subtitle, { color: colors.text, opacity: 0.6 }]}>
             {isLogin
-              ? 'Sign in to sync your reflections and progress'
+              ? 'Sign in to sync your chats and progress'
               : 'Create an account to save your spiritual journey'}
           </Text>
         </View>

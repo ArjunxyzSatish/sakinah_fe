@@ -21,6 +21,7 @@
       "supportsTablet": true
     },
     "android": {
+      "softwareKeyboardLayoutMode": "pan",
       "splash": {
         "image": "./assets/transparent.png",
         "resizeMode": "contain",
@@ -54,7 +55,13 @@
       ],
       "expo-localization",
       "@react-native-community/datetimepicker",
-      "expo-notifications",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#004431"
+        }
+      ],
       [
         "expo-build-properties",
         {

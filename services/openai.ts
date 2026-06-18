@@ -2,7 +2,7 @@ import { Language } from '../context/LanguageContext';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL;
 
-export async function* streamReflection(message: string, language: Language = 'en', token: string | null = null) {
+export async function* streamChat(message: string, language: Language = 'en', token: string | null = null) {
   const chunks: string[] = [];
   let done = false;
   let error: Error | null = null;
