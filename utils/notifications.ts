@@ -55,7 +55,6 @@ export async function cancelAllNotifications() {
   console.log('Cancelled all scheduled notifications.');
 }
 
-import { getTodayPrayerTimes } from './adhanHelper';
 import { Coordinates, CalculationMethod, PrayerTimes } from 'adhan';
 
 let isScheduling = false;
@@ -99,17 +98,18 @@ export async function schedulePrayerNotifications(lat: number, lon: number) {
     ];
 
     for (const prayer of prayers) {
-      if (prayer.time.getTime() > Date.now()) {
+      const notifTime = new Date(prayer.time.getTime() - 5 * 60 * 1000);
+      if (notifTime.getTime() > Date.now()) {
         await Notifications.scheduleNotificationAsync({
           content: {
-            title: `Time for ${prayer.name}`,
-            body: `It's ${prayer.name} time. Take a moment to connect and find peace.`,
+            title: `${prayer.name} in 5 minutes`,
+            body: `${prayer.name} prayer is starting in 5 minutes. Time to prepare.`,
             sound: true,
             priority: Notifications.AndroidNotificationPriority.MAX,
           },
           trigger: {
             type: Notifications.SchedulableTriggerInputTypes.DATE,
-            date: prayer.time,
+            date: notifTime,
             channelId: 'prayer-reminders',
           },
         });

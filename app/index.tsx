@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, RefreshControl, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Bookmark, Image as ImageIcon } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { getDailyVerse, DAILY_VERSES, getRandomVerse } from '../utils/verses';
@@ -45,6 +46,9 @@ export default function Home() {
       const newVerse = await generateRandomVerse(language, session?.access_token || null);
       setDailyVerse(newVerse);
       decrementVersesRemaining();
+      // Cache as today's verse so re-opening the app shows this one
+      const cacheKey = `sakinah_daily_verse_${language}`;
+      await AsyncStorage.setItem(cacheKey, JSON.stringify({ date: new Date().toDateString(), verse: newVerse }));
     } catch (error: any) {
       if (error?.message?.includes('403')) {
          if (user) setShowPaywall(true);
