@@ -7,7 +7,7 @@ import { useTheme } from '../context/ThemeContext';
 import { IslamicPattern, Crescent, OpenBook, Mandala, Mosque } from '../components/IslamicElements';
 import { QiblaCompass } from '../components/QiblaCompass';
 import { Check, ChevronDown, ChevronUp, Bell, ChevronLeft } from 'lucide-react-native';
-import * as Notifications from 'expo-notifications';
+import { requestNotificationPermissions } from '../utils/notifications';
 import { Magnetometer } from 'expo-sensors';
 import * as Haptics from 'expo-haptics';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
@@ -88,11 +88,7 @@ export default function Onboarding() {
   };
 
   const requestNotifications = async () => {
-    const { status } = await Notifications.requestPermissionsAsync();
-    if (status !== 'granted') {
-      return false;
-    }
-    return true;
+    return await requestNotificationPermissions();
   };
 
   const nextStep = () => setStep(step + 1);

@@ -70,7 +70,10 @@
             "targetSdkVersion": 35
           }
         }
-      ]
+      ],
+      "expo-sharing",
+      "expo-status-bar",
+      "expo-web-browser"
     ],
     "extra": {
       "router": {
