@@ -8,12 +8,15 @@ import { Crescent } from '../components/IslamicElements';
 import { Download } from 'lucide-react-native';
 import { useAppAlert } from '../components/AppAlert';
 import ViewShot from 'react-native-view-shot';
-import * as MediaLibrary from 'expo-media-library';
+
+// expo-media-library requires a development build (not available in Expo Go since SDK 53)
+let MediaLibrary: any = null;
+try { MediaLibrary = require('expo-media-library'); } catch {}
 
 export default function Wallpaper() {
   const [isDark, setIsDark] = useState(false);
   const [showTranslation, setShowTranslation] = useState(true);
-  const [permissionResponse, requestPermission] = MediaLibrary.usePermissions();
+  const [permissionResponse, requestPermission] = MediaLibrary?.usePermissions?.() ?? [null, async () => ({ status: 'denied' })];
   const viewShotRef = useRef<ViewShot>(null);
   
   const { t } = useLanguage();
@@ -32,7 +35,7 @@ export default function Wallpaper() {
       }
       if (viewShotRef.current?.capture) {
         const uri = await viewShotRef.current.capture();
-        await MediaLibrary.saveToLibraryAsync(uri);
+        await MediaLibrary?.saveToLibraryAsync(uri);
         showAlert('Saved!', 'Your wallpaper has been saved to the gallery.', undefined, '✅');
       }
     } catch (error) {
