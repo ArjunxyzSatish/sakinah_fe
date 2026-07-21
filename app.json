@@ -7,26 +7,15 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
     "androidStatusBar": {
       "backgroundColor": "#004431",
       "barStyle": "light-content"
-    },
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "cover",
-      "backgroundColor": "#004431"
     },
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "softwareKeyboardLayoutMode": "pan",
-      "splash": {
-        "image": "./assets/transparent.png",
-        "resizeMode": "contain",
-        "backgroundColor": "#004431"
-      },
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#F7F5EF"
@@ -50,7 +39,12 @@
         {
           "image": "./assets/splash-icon.png",
           "resizeMode": "cover",
-          "backgroundColor": "#004431"
+          "backgroundColor": "#004431",
+          "android": {
+            "image": "./assets/transparent.png",
+            "resizeMode": "contain",
+            "backgroundColor": "#004431"
+          }
         }
       ],
       "expo-localization",
